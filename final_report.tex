@@ -19,9 +19,10 @@
     citecolor=black,
     filecolor=black,
     linkcolor=black,
-    urlcolor=black
+    urlcolor=cyan,
 }
 
+\newcommand{\Newnameref}[1]{\textit{\nameref{#1}}}
 \pgfplotsset{compat=1.13}
 
 \begin{document}
@@ -31,15 +32,27 @@
 
 \maketitle{}
 
+
+
+
 \section*{Abstract}
 
 % This will be the _last_ section we write.
 
+
+
+
 \section{Introduction}
+
+
+
 
 \subsection{Motivation}
 
   Knowing the position and orientation of a mobile robot is critical to many tasks, and while there are tried-and-true solutions to many instances of the general localization problem, there remain some environments which are unsolved. In this work, we focus specifically on FRC as a test environment. FRC is a challenging environment because the robots make rapid and aggressive maneuvers by human drivers for part of the time, and at other times are under complete autonomy. Another challenge is that FRC fields are cluttered with other robots and game pieces such as soccer balls, pool noddles, or inflatable shapes, and these objects change from year to year. A successful localization system for FRC must support up to six robots, as well as occlusion from the playing field elements, unpredictable lighting, and frequent impacts. Our research suggests that there are at least five appropriate methods for localization: cameras and tags, radio and ultrasonic beacons, optical flow, dead reckoning with encoders, and dead reckoning with an IMU. All of these methods have seen success in robot localization. Generally, FRC robots do not localize to the field. There are a few teams which do attempt this \cite{balaji_zebravision_2017}, but they lack rigorous analysis and do not compare different methods for localization--their concern is to build something that simply works well enough for their robot and their team. Therefore, we saw the need for a more comprehensive study of localization techniques applicable to GPS-denied environments with fast moving robots and clutter.
+
+
+
 
 \subsection{Problem Statement}
 
@@ -48,66 +61,65 @@
   % FIXME:
   % Even though FRC teams do not have a full field to test on, they still need a way to test specific behaviors that are specific to the field. Teams will construct mock-ups of small parts of the field and various game elements to test with. For example, if the game requires shooting basketballs into a hoop, most teams will build or purchase a basketball hoop that is similar to the one used on the field and mount it somewhere in their shop. The important point is that the hoop will likely be mounted in a slightly different position or orientation. Ideally, a localization system fro FRC allow teams to use their mock setup as if it were the real field. In other words, teams could test a program that autonomously shoots balls into the hoop in their shop and later use the same code with confidence in the competition. Teams must be able to specify the location of their mock field elements so that our localization system can report position that is relative to this hallucinated version of the field.
 
+
+
+
 \subsection{Key Contributions}
 
-  We contribute a survey of localization techniques applicable to FRC-like environments, a set of metrics which define a successful localization system for FRC, a suite of 24 experiments (see \ref{section:experiments}) spanning many different different sensing methods, a dataset of robot sensory readings and associated ground-truth positions, and a sample implementation of a full localization system based on all this knowledge. We also evaluate the MarkerMapper tool for building large maps of many aruco fiducial markers, and provide an array of tools for collecting and analyzing encoder, IMU, and camera data.
+  We contribute a survey of localization techniques applicable to FRC-like environments, a set of metrics which define a successful localization system for FRC, a suite of 24 experiments (see \Newnameref{section:experiments}) spanning many different different sensing methods, a dataset of robot sensory readings and associated ground-truth positions, and a sample implementation of a full localization system based on all this knowledge. We also evaluate the MarkerMapper tool for building large maps of many aruco fiducial markers, and provide an array of tools for collecting and analyzing encoder, IMU, and camera data.
 
-	This report begins with a review of existing literature on indoor localization for mobile robots in the \nameref{section:related_work} section. The strengths and weaknesses of these existing methods are described in the \nameref{section:methods} section. The \nameref{section:experiments} section contains information on experiments we conducted. The \nameref{section:specs} section provides a complete description of our design criteria and system specifications. The \nameref{section:conclusion} section details our plan moving forward.
+  % TODO: outline the report here
+	% This report begins with a review of existing literature on indoor localization for mobile robots in the \Newnameref{section:related_work} section. The strengths and weaknesses of these existing methods are described in the \Newnameref{section:methods} section. The \Newnameref{section:experiments} section contains information on experiments we conducted. The \Newnameref{section:specs} section provides a complete description of our design criteria and system specifications. The \Newnameref{section:conclusion} section details our plan moving forward.
 
 \tableofcontents
 
+
+
+
 \section{Survey of Localization Techniques} \label{section:related_work}
 
-   Overall, the problem of localizing a mobile robot can be viewed as accurately measuring the absolute distance to known landmarks, or by measuring the changes in position over time. All localization methods lie somewhere on a spectrum between these two approaches, and we will henceforth refer to these two ideas as global and local pose estimation. Some of the high level techniques for robot localization are: measuring range at various points around the robot and matching these readings to a map, measuring time of flight or difference of time of arrival to calculate distances to known locations, recognizing landmarks and computing pose relative to those landmarks, and measuring changes in pose and accumulating these changes over time. There are different sensors that can be used for each of these techniques, such as laser range finders, ultrasonic, cameras, inertial measurement units (IMU), encoders, radio, infrared light, visible light, ultrasonic and audible sound. Although there are a tremendous number of possible methods for indoor mobile robot localization, there are a few which have received the most attention and shown the most success. These include, but are not limited to:
+   Overall, the problem of localizing a mobile robot can be viewed as accurately measuring the absolute distance to known landmarks, or by measuring the changes in position over time. All localization methods lie somewhere on a spectrum between these two approaches, and we will henceforth refer to these two ideas as global and local pose estimation. Some of the high level techniques for robot localization are: measuring range at various points around the robot and matching these readings to a map, measuring time of flight or difference of arrival time to calculate distances to known locations, recognizing landmarks and computing pose relative to those landmarks, and measuring changes in pose and accumulating these changes over time. There are different sensors that can be used for each of these techniques, such as laser range finders, cameras, inertial measurement units (IMU), encoders, radio, infrared light, visible light, ultrasonic and audible sound. Although there are a tremendous number of possible methods for indoor mobile robot localization, there are a few which have received the most attention and shown the most success. These include, but are not limited to:
   \begin{itemize}
     \item LIDAR mapping
     \item Ultrasonic mapping
     \item IMU and Encoders fusion
     \item Infrared or Radio and Ultrasonic beacons
     \item Wireless network methods based on signal strength
-    \item cameras with visually identifiable tags
+    \item Cameras with visually identifiable tags
     \item Optical flow mice and cameras
   \end{itemize}
 
-  In our research, we learned how these techniques work and found descriptions and implementations in order to evaluate them. These descriptions and implementations are presented in this section with the purpose of demonstrating a thorough literature review and of providing background information to the reader.
+  In our research, we learned how these techniques work and found descriptions and implementations to figure out whether they are appropriate for high-speed, cluttered, multi-robot environments like FRC. These descriptions and implementations are presented in this section with the purpose of demonstrating a thorough literature review and of providing background information to the reader.
 
   \subsection{LIDAR Mapping}
-    LIDAR is a sensor that works by measuring the amount of time it takes light to return to the LIDAR after hitting a desired object \cite{keith_lidar_2007}. Light travels at about \SI{0.3}{\meter\per\nano\second} which is a constant speed \cite{keith_lidar_2007}. The sensor sends a certain number of beams at certain intervals towards an object. Since light moves at a constant speed the LIDAR can calculate the distance between itself and the object that light was hitting. To calculate distance the formula $\frac{d*c}{2}$ can be used. $d$ is the distance to the object, $c$ is speed of light and then divided by two to account for traveling to the object and back. By repeating this process at different angles the LIDAR can produce a map of its surroundings by finding the distance between it and surrounding objects within its detecting range \cite{keith_lidar_2007}.
+    LIDAR is a sensor that works by measuring the amount of time it takes a laser to return to the LIDAR after hitting a desired object \cite{keith_lidar_2007}. Since light moves at a constant speed, the LIDAR can calculate the distance between itself and the object that light was hitting. The formula to compute distance is $\frac{d*c}{2}$, where $d$ is the distance to the object, $c$ is the speed of light and the division by two accounts for traveling to the object and back. By repeating this process at different angles the LIDAR can produce a map of its surroundings by finding the distance between it and surrounding objects within its detecting range.
 
-    There are three types of information LIDAR can collect depending on the type of LIDAR. The first is the range to the target which is found using a topographical LIDAR \cite{keith_lidar_2007}. A differential Absorption LIDAR can find the chemical properties of the targets it is measuring. A doppler LIDAR can measure the velocity of a target \cite{keith_lidar_2007}. This project would use a topographical LIDAR to measure the distance from itself to other objects to find position.
+    There are three types of information LIDAR can collect depending on the type of LIDAR. The first is the range to the target which is found using a topographical LIDAR. A differential Absorption LIDAR can find the chemical properties of the targets it is measuring. A doppler LIDAR can measure the velocity of a target. For our scenario, we concern ourselves only with topographical LIDAR methods.
 
     Most LIDAR have two main pulse systems for measuring distance. The first system uses a micropulse have lower powered lasers that are usually considered safer \cite{keith_lidar_2007}. The wavelength for these is typically 1.0-\SI{1.5}{\meter} \cite{lidar_uk_how_2017}. The second system uses high energy lasers and is typically only used for atmospheric measurements \cite{keith_lidar_2007}. The wavelength of these is typically 0.5-\SI{0.55}{\meter} \cite{lidar_uk_how_2017}.
-    LIDAR does localization by using the map it generated of its surrounding and being able to identify landmarks on the map. The LIDAR system will then compare the location of the landmarks to a previously known map. And since the distance between it and those landmarks are known, the LIDAR system can be used to determine its own position \cite{schlichting_vehicle_2016}. Another approach is to match point clouds found on the most recent map produced by the LIDAR to point clouds on the prior map. This has advantages because it does not rely on there being distinguishing features in the environment. But it also takes more time to compute the map since it has to compare more points than a feature to feature map \cite{li_extracting_2010}.
+    LIDAR localization works by matching landmarks to some known map. Since the distance between it and those landmarks are known, the LIDAR system can be used to determine its own position \cite{schlichting_vehicle_2016}. Another approach is to match point clouds found on the most recent map produced by the LIDAR to point clouds on the prior map. This has advantages because it does not rely on there being distinguishing features in the environment. But it also takes more time to compute the map since it has to compare more points than a feature to feature map \cite{li_extracting_2010}.
+
+    % TODO:
+    % need sources for accuracy and sample implementations
 
   \subsection{Ultrasonic Mapping}
 
-    Ultrasonic mapping (often referred to as sonar) was one of the first techniques used for indoor robot localization, and has been explored deeply since the 1980's. The most common approach is to use multiple emitter-receiver transducers placed around the perimeter of the robot, measure the range at each of those points, then localized to a given map of the environment \cite{drumheller_mobile_1987}. Alternately, some systems use one sensor and rotate it around to achieve the same effect \cite{leonard_mobile_1991, drumheller_mobile_1987}. The algorithms for interpreting the measured distances work by first extracting lines, then matching these lines to an existing map. Reported accuracies of the system in \cite{drumheller_mobile_1987} was 1 ft for position, and \ang{10} for angle. In \cite{drumheller_mobile_1987} and \cite{leonard_mobile_1991}, the reported rate of position updates is \SI{1}{\hertz}. Additionally, some methods will explicitly model the uncertainty of the position estimate, or explicitly model the behavior of ultrasonic sensors to ignore unreliable data. A more recent and sophisticated approach to localizing with sonar can be found in \cite{tardos_robust_2002}, in which 24 sonar sensors in conjunction with encoders were used to perform simultaneous localization and mapping. Their experimental results report drifts of \SI{3.9}{\meter} and \ang{21} over the course of \SI{35}{\meter} of travel.
+    Ultrasonic mapping (often referred to as sonar) was one of the first techniques used for indoor robot localization, and has been explored deeply since the 1980's. The most common approach is to use multiple emitter-receiver transducers placed around the perimeter of the robot, measure the range at each of those points, then localized to a given map of the environment \cite{drumheller_mobile_1987}. Alternately, some systems use one sensor and rotate it to achieve the same effect \cite{leonard_mobile_1991, drumheller_mobile_1987}. The algorithms for interpreting the measured distances work by first extracting lines, then matching these lines to an existing map using algorithms such as RANSAC. Reported accuracies of the system in \cite{drumheller_mobile_1987} was 1 ft for position, and \ang{10} for angle. In \cite{drumheller_mobile_1987} and \cite{leonard_mobile_1991}, the reported rate of position updates is \SI{1}{\hertz}. Additionally, some methods will explicitly model the uncertainty of the position estimate, or explicitly model the behavior of ultrasonic sensors to ignore unreliable data. A more recent and sophisticated approach to localizing with sonar can be found in \cite{tardos_robust_2002}, in which 24 sonar sensors in conjunction with encoders were used to perform simultaneous localization and mapping. Their experimental results report drifts of \SI{3.9}{\meter} and \ang{21} over the course of \SI{35}{\meter} of travel.
 
   \subsection{IMUs and Encoders}
-    An inertial measurement unit (IMU) is a sensor reporting the forces acting upon an object, the angular rates of change, and surrounding magnetic field. The device typically comprises an accelerometer, gyroscope, and magnetometer which sense the above data respectively. These devices function by detecting Coriolis forces, inertial forces acting in the direction of motion relative to a rotating reference frame. These forces are proportional to the magnitude of the acceleration. These forces may be detected by a simple strain gauge mechanism or object vibrating at a known frequency (the rate of change of vibration frequency is detected) \cite{barshan_inertial_2017}. The premise behind position sensing using this device involves integrating the data with respect to time to calculate position and orientation. This approach was first used in aeronautics to estimate projectile attitude, orientation, and position \cite{nasa_kalman_1999}. High cost IMU's have been used historically for defense and transportation systems; the quality of the sensor is high and the data is reliable in these applications. An inertial navigation system (INS) often comprises multiple accelerometers, gyroscopes, and magnetometers to estimate orientation and position. Their performance is increased by referencing, or filtering, one sensor to estimate the error from another. Simple double integration of a filtered system using expensive sensors is often sufficient for position tracking applications like ballistics or missile tracking \cite{barshan_inertial_2017}.
+    An inertial measurement unit (IMU) is a sensor reporting the forces acting upon an object, the angular rates of change, and surrounding magnetic field. The device typically comprises an accelerometer, gyroscope, and magnetometer which sense the above data respectively. These devices function by detecting Coriolis forces, which are inertial forces acting in the direction of motion relative to a rotating reference frame. These forces are proportional to the magnitude of the acceleration. These forces may be detected by a simple strain gauge mechanism or object vibrating at a known frequency (the rate of change of vibration frequency is detected) \cite{barshan_inertial_2017}. The premise behind position sensing using this device involves integrating the data with respect to time to calculate position and orientation. This approach was first used in aeronautics to estimate projectile attitude, orientation, and position \cite{nasa_kalman_1999}. High cost IMUs have been used historically for defense and transportation systems; the quality of the sensor is high and the data is reliable in these applications. An inertial navigation system (INS) often comprises multiple accelerometers, gyroscopes, and magnetometers to estimate orientation and position. Their performance is increased by referencing, or filtering, one sensor to estimate the error from another. Simple double integration of a filtered system using expensive sensors is often sufficient for position tracking applications like ballistics or missile tracking \cite{barshan_inertial_2017}.
 
-    In cost-sensitive systems, this methodology is subject to high error rates from accumulation. Because of integration of accelerometer data, the velocity error term grows linearly and position error quadratically. This introduces a need for filtering, sensor fusion, and optimization based approaches.
+    In cost-sensitive systems, these simple methods are much less accurate because the low-cost electronics have more drift and noise. Because of integration of accelerometer data, the velocity error term grows linearly and position error grows quadratically. This introduces a need for more sophisticated filtering, sensor fusion, and optimization based approaches. Bayesian filters (Kalman Filter, Particle Filter, \dots) are one family of filtering algorithms commonly used with IMUs.
 
-      Rarely in mobile applications are IMUs the primary position sensor. Odometers and encoders offer relative position sensing because they measure change between distances, but must be provided with a frame of reference. Most odometry-based sensors are updated at a high-frequency, but are subject to high error rates from gear inefficiencies, wheel slippage during normal rotation, and irregularities in data processing \cite{hertzberg_integrating_2011}. Complementary filtering, or using multiple, weighted sources of data, is used to obtain a position estimate. Linear quadratic estimation can be used to estimate the position of a object; however, this technique is relatively complex. The algorithm makes a prediction about the current position, taking into account error from the previous measurements. Once the current data is available, the algorithm uses it to correct the parameters it used to make the estimation, provided the data is of high certainty. Known as a Kalman filter, this process uses a known model of the system and assumes errors in the sensors to smoothen the data. Systems can leverage data from a range sensor \cite{teslic_ekf-based_2011} or indoor positioning systems that use radio frequency signals \cite{marquez_accurate_2017}.
+    If the rate at which the position must be updated is lower than the update rate of the data, many values can be processed and used to calculate an approximation within a given time window. This technique is known as preintegration. Instead of filtering the data, preintegration combines many data points into a single trajectory estimate. Then, it transforms the data into the navigation frame, allowing for a smoother approximation of system position. This was beneficial in cases where global position data was unavailable for extended periods of time, and it also decreases computational load of the localization thread \cite{lupton_visual-inertial-aided_2012}. The authors of \cite{lupton_visual-inertial-aided_2012} describe an overall CPU time of about 10ms for data processing and real-time execution, although the system update frequency is unknown. %TODO: any accuracy information?
 
-      Cameras, radio beacons, GPS, and similar landmark-based technologies offer global position sensing and have lower accumulated error than local systems discussed above. However, update frequencies are comparatively low, leading to false predictions or periods of unknown position. To compensate for this phenomenon, systems can leverage data streams with higher update frequencies to interpolate between frames. Forster \textit{et al.} describe a visual-inertial navigation system that uses accelerometer and gyroscope data streamed at a high frequency to estimate a pose trajectory between select frames from the camera. Known as keyframes, these camera data are selected to minimize computational requirements while minimizing feature loss. Often, a parallel thread selects appropriate frames. Then, the IMU data are processed into a relative motion constraint. Effectively, this yields a trajectory of position and orientation between camera updates \cite{christian_forster_imu_2015}.
+    Another method for computing position from IMU data is presented in \cite{vadim_indelman_information_2013}. The state estimate and sensors measurements, which include imagery in addition to IMU data, are represented as a factor graph, and an novel algorithm is presented to update these estimates to approximately-optimally estimate the true state. The main benefit of this approach is improved computational complexity over methods like Bundle Adjustment, without requiring linear or approximately-linear sensor models like with Kalman or Extended Kalman Filters.
 
-        If the rate at which the position must be updated is lower than the update rate of the data, many values can be processed and used to calculate an approximation within a given time window. Known as preintegration, this technique, instead of filtering the data, combines many data points into a single trajectory estimate. Then, it transforms the data into the navigation frame, allowing for a smoother approximation of system position. This was beneficial in cases where global position data was unavailable for extended periods of time and decreased the computational load of the localization thread \cite{lupton_visual-inertial-aided_2012}. Systems like this are effective because camera data is used to correct IMU data on-line when data is available and rarely fails to update the pose estimate between frames. The above work describes an overall CPU time of about 10ms for data processing and real-time execution, although the system update frequency is unknown.
-
-        Leveraging preintegration, systems expanded sensor fusion frameworks with probabilistic terms and models of relationships between sensors. One such approach used a factor-graph to represent system state variables as nodes on a tree and the functional relationship between them as factors (edges). Instead of updating the state each time new data is available, the factor tree updates relevant state variables add into account an error term \cite{vadim_indelman_information_2013}. A key aspect of this system relies on frame transformations between sensor data happening at a low level. This takes workload off of the main CPU by utilizing FPGAs or other processors to monitor and process odometry or IMU data. Implementations of such systems claim reduced computational load and similar performance to ORB-SLAM and other modern navigation systems.
-
-    \begin{figure}[H]
-      \centering
-      \includegraphics[width=0.4\linewidth]{./images/Factorgraph.jpg}
-      \caption{A simple factor graph \cite{hwymeers_example_2008}.}
-      \label{fig:ex_factor_graph}
-    \end{figure}
-
-      Designed for the FIRST Robotics Challenge, frameworks such as Sensor Fusion 2 (SF2) provide users with algorithms for an integrated platform. Some examples are latency correction between IMU and camera data, fusion of encoder and IMU data, and keyframe-based state estimation \cite{kauai_labs_inc_video_2017}. Again, these algorithms use known system parameters, such as update frequencies of sensors, frame transformations between sensors, and data from landmarks for filtering and position estimation. Usually, the IMU data is available at a rate an order of magnitude larger than that of the camera. Additionally, the data is accurately timestamped and easily accessible to the vision processing thread. This way, the user receives an updated pose estimate without lag and has a history of the orientation. This is useful for trajectory planning or on-line path correction (like recovering from a collision). Within the next several years, systems like this will mature, offering localization or possibly SLAM.
+    Due to the widespread availability and well understood algorithms for using IMUs to derive position, there exist libraries for IMU based localization already available to FRC team. Frameworks such as Sensor Fusion 2 (SF2) provide students with algorithms that include double integration, latency correction between IMU and camera data, fusion of encoder and IMU data, and keyframe-based state estimation \cite{kauai_labs_inc_video_2017}. These algorithms use known system parameters, such as update frequencies of sensors, frame transformations between sensors, and data from landmarks for filtering and position estimation. Additionally, the data is accurately timestamped and easily accessible to the vision processing thread. This way, the user receives an updated pose estimate without lag and has a history of the orientation. However, we suggest that these libraries are not quite robust enough for FRC teams to rely on them for accurate position (see \nameref{section:defining_success})
 
   \subsection{Beacon systems and Wireless Networks}
 
-    Beacon systems have been used many times with success in the literature. Generally, these systems use ultrasound and or radio as a medium and either signal strength, phase shift, or time to measure distance to the beacons. Among radio systems, the system in \cite{bahl_radar:_2000} identified the location of people moving around buildings using signal strength in the 2.4gHz band received at three or more beacons, and they report accuracy of a few meters with an update rate of at most four times per second. The systems described in \cite{digiampaolo_mobile_2014} uses passive RFID tags on the ceiling and an RFID transmitter on the robot, and report an accuracy of 4\si{\centi\meter} within a 5\si{\square\meter}. Another RFID system \cite{saab_standalone_2011} also uses signal strength to RFID, and reports accuracies for various configurations ranging from 1\si{\centi\meter} to 3\si{\meter}. These RFID systems use readers that cost over \$500.
+    Beacon systems generally use ultrasound and or radio as a medium and either signal strength, phase shift, or time to measure distance to the beacons. Among radio systems, the system in \cite{bahl_radar:_2000} identified the location of people moving around buildings using signal strength in the 2.4gHz band received at three or more beacons, and they report accuracy of a few meters with an update rate of at most four times per second. The systems described in \cite{digiampaolo_mobile_2014} uses passive RFID tags on the ceiling and an RFID transmitter on the robot, and report an accuracy of 4\si{\centi\meter} within a 5\si{\square\meter}. Another RFID system \cite{saab_standalone_2011} also uses signal strength to RFID, and reports accuracies for various configurations ranging from 1\si{\centi\meter} to 3\si{\meter}. These RFID systems use readers that cost over \$500.
 
     There are also countless localization systems that use standard wireless networks. A comprehensive survey of these systems can be found in \cite{liu_survey_2007}. Systems that use signal strength in standard wireless LAN networks have achieved up to 10\si{\centi\meter} accuracy and hundreds of updates per second. Another radio beacon solution is to substitute single-frequency radio with Ultra-wideband radio. These systems can achieve centimeter level accuracy, but they use obscure or custom made transmitters and receivers that cost in the hundreds of dollars \cite{zebra_dart_2017} \cite{pozyx_pozyx_2017}.
 
@@ -119,7 +131,7 @@
 
 	\subsubsection{ArUco and MarkerMapper}
 
-    The ArUco library provides a function for estimating the pose of an object by minimizing the squared sums of the distances between the projected points and the measured points (reprojection error). The side length of each tag is known and input into the program. The measured points (two corners, minimally) are used to obtain a point estimate in 3D space. Multiple point estimates from each corner are used to calculate the pose of the ArUco tag's centroid. The projected points are described by the camera matrix, which is a model for a pinhole camera discussed above. The reprojection error corrects the pose estimate based on the calibrated values.
+    The ArUco library (\url{https://sourceforge.net/projects/aruco/}) provides a function for estimating the pose of an object by minimizing the squared sums of the distances between the projected points and the measured points (reprojection error). The side length of each tag is known and input into the program. The measured points (two corners, minimally) are used to obtain a point estimate in 3D space. Multiple point estimates from each corner are used to calculate the pose of the ArUco tag's centroid. The projected points are described by the camera matrix, which is a model for a pinhole camera discussed above. The reprojection error corrects the pose estimate based on the calibrated values.
 
     \begin{figure}[H]
       \centering
@@ -128,7 +140,7 @@
       \label{fig:reprojection_img}
     \end{figure}
 
-    The ID of the origin is input into the program. By estimating the pose of each tag in a camera frame, a map of transforms between tags was developed. The user must first map their work space by collecting transform data.
+    MarkerMapper (\url{https://sourceforge.net/projects/markermapper/}) builds on top of the detection of individual markers. Markers are first scattered around the environment, then MarkerMapper can be used to build a map of their poses in space. The ID of the origin is input into the program. By estimating the pose of each tag in a camera frame, a map of transforms between tags was developed. Then, the position of the robot's camera, and by extension the robot itself, can be found with respect to detected markers.
 
     \begin{equation} \label{eq:PoseDefCamera}
       p =
@@ -214,9 +226,12 @@
 
     Many of the localization techniques discussed involve some form of calibration. Primarily, the IMU requires calibration for misaligned axis, scaling factors, and biases. There are many procedures for calcuating these calibration parameters by taking advantage of static intervals and assumptions about the force of gravity \cite{lupton_visual-inertial-aided_2012}\cite{lee_test_2011}\cite{tedaldi_robust_2014}. Visual tag detection algorithms, such as ArUco, also include a camera calibration process to account for the focal length, field of view, and distortion characteristics of the camera \cite{itseez_calibration_2017}. Knowing these parameters allows one to undo distortion to the image, which is essential for detection of most AR tags.
 
+
+
+
 \section{Trade-Off Analysis Of Different Techniques} \label{section:methods}
 
-  Each of the techniques presented thus far have strengths and weaknesses. In cases where those strengths and weaknesses are orthogonal, combining multiple techniques improves the overall performance. This is the fundamental principle behind sensor fusion. For example, in \cite{kim_advanced_2008} the authors use a compass to make up for the inability of beacons to measure orientation of the robot. In order to tackle all of the diverse challenges of localization in the FRC environment, we believe it is necessary to combine techniques. In this section we will explain which techniques we have selected for our system and which we have ruled out. We will justify why none of the techniques discussed are sufficient on their own, and explain which the techniques we have chosen work well together.
+  Each of the techniques presented thus far have strengths and weaknesses. In cases where those strengths and weaknesses are orthogonal, combining multiple techniques can improve the overall performance. This is the fundamental principle behind sensor fusion. For example, in \cite{kim_advanced_2008} the authors use a compass to make up for the inability of beacons to measure orientation of the robot. In order to tackle all of the diverse challenges of localization in the FRC environment, we believe it is necessary to combine techniques. In this section we will explain which techniques we have selected for our system and which we have ruled out. We will justify why none of the techniques discussed are sufficient on their own, and explain which the techniques we have chosen work well together.
 
   As stated in section \ref{section:related_work}, techniques for localization include LIDAR mapping, ultrasonic mapping, IMU and encoders, infrared or radio and ultrasonic beacons, wireless network methods, cameras with tags, and optical flow. Each of these techniques has been used successfully in their respective applications, but not all of them are appropriate for this project.
 
@@ -226,7 +241,7 @@
 
   IMUs within the budget of FRC teams suffer from accumulated drift, and as such they cannot be used in isolation. On the other hand, many FRC students have experience with them, so it would be wise to support basic features such as heading detection and filtering using IMUs. IMUs also complete other localization techniques very well. For example, cameras suffer from the jitter of the robot moving, and encoders fail when the wheels slip. IMUs on the other hand are excellent at detecting jitter and slippage. In this way, an IMU is a good complement to cameras and encoders.
 
-  Radio and ultrasonic beacons are very attractive because of their low cost and ability to automatically locate each other. The cost of each beacon, according to the specifications laid out in section \ref{section:system_spec}, are projected to cost about \$30 (see \ref{table:beacon_bom}). Furthermore, beacons have more flexibility in their placement than tags because they are much smaller and do not need to be on flat surfaces, or in specific orientations. Finally, because each beacon can operate as a transmitter or a receiver, beacons can automatically locate each other which means students will not have to measure their positions or worry about them moving. A procedure for this self-localization is described in section \ref{section:beacon_self_localization}. Beacons also make up for some flaws in the other techniques. Beacons provide absolute global position but updates slowly, which nicely complements IMU and encoder methods which are fast but only measure changes in position. Additionally, beacons are more resistant to jitter than cameras. Finally, by placing the beacons and cameras in different locations we can minimize the effect of occlusion.
+  Radio and ultrasonic beacons are very attractive because of their low cost and ability to automatically locate each other. The cost of each beacon are projected to cost about \$30 (see \ref{table:beacon_bom}). Furthermore, beacons have more flexibility in their placement than tags because they are much smaller and do not need to be on flat surfaces, or in specific orientations. Finally, because each beacon can operate as a transmitter or a receiver, beacons can automatically locate each other which means students will not have to measure their positions or worry about them moving. A procedure for this self-localization is described in section \ref{section:beacon_self_localization}. Beacons also make up for some flaws in the other techniques. Beacons provide absolute global position but updates slowly, which nicely complements IMU and encoder methods which are fast but only measure changes in position. Additionally, beacons are more resistant to jitter than cameras. Finally, by placing the beacons and cameras in different locations we can minimize the effect of occlusion.
 
   Wireless network systems are among the most popular for indoor localization. However, they also require knowledge and control over the 2.5 gHz spectrum in the area where they are used. At FRC events, there can be dozens of wireless networks running, as well as the wireless networks used on the field for communication between robots. For this reason, we feel that techniques using wireless frequency have too many unknown variables.
 
@@ -247,7 +262,12 @@
 
   The other option for optical flow is to use a camera which can be facing in any direction. OpenCV provides libraries and sample programs for running dense optical flow and sparse optical flow. The Lucas-Kanade method of sparse optical flow finds the best points on a frame and tracks the motion of only those points by comparing it to the motion of the pixels around that point. It is assumed all pixels around a point will have similar motion. Dense optical flow tracks the motion of all of the points on frames. Dense optical flow takes longer since it is using all of the points on a frame but can be more accurate \cite{itseez_opencv_2017}. In general, optical flow is not sufficient on its own because it does not provide global position information. However, it nicely complements our other systems because it uses a sensor we already plan to use, and provides a source of local position updates not based on any assumptions about wheels or robot dynamics.
 
-  Ultimately, we have identified IMUs, encoders, cameras with tags, beacons, and optical as promising techniques for localization in FRC. These techniques together provide redundant sources of both local and global pose estimates, and account for many of the challenges associated with localization for FRC. We believe that implementing each of these techniques and combining their results will produce a more robust localization than exploring any one of them in depth.
+  \subsection{Proposed Localization Techniques} \label{section:proposed_techniques}
+
+    Ultimately, we have identified IMUs, encoders, cameras with tags, beacons, and optical flow as promising techniques for localization in FRC. These techniques together provide redundant sources of both local and global pose estimates, and account for many of the challenges associated with localization for FRC. We believe that implementing each of these techniques and combining their results will produce a more robust localization than exploring any one of them in depth.
+
+
+
 
 \section{Defining Successful Localization in FRC} \label{section:defining_success}
 
@@ -270,9 +290,11 @@
 
   To come up with hard numbers for these criteria, we first performed a few simple calculations based on our knowledge of FRC. First, we consider what teams would want to use position information for, and decided that the applications requiring the most accuracy are shooting and autonomous pick of game pieces at known locations. Both of these require the position estimates to be close to the true position of the robot. From there, we estimate that most FRC shooting and pickup mechanisms will work within $\pm$\SI{10}{\centi\meter}. Next, we decided the application requiring the most precision would be path following. If position estimates are imprecise and jump around rapidly, smooth path following will be difficult. From our experience with path following, we estimated that $\pm$\SI{5}{\centi\meter} and  $\pm$\ang{2} would be sufficient. For update rate, we considered what the maximum distance a robot could move within a period and used that to decide what our update rate should be. The very fastest FRC robots move \SI{6}{\meter\per\second}, which at an update rate of every \SI{20}{\milli\second} is a distance of $0.02*6 =$ \SI{0.12}{\meter}. The rate of \SI{20}{\milli\second} is a realistic cycle time in FRC, and we feel \SI{12}{\centi\meter} is sufficient given the speed. For accessibility, we acknowledged that teams cannot spend more than \$400 on any part, and that most times source parts from websites AndyMark, Cross-the-road Electronics, and National Instruments among other suppliers. We are also conscious that many FRC teams have limited or cluttered spaces for testing their robots, and may be working in a shared space that must be clean and usable after their work sessions.
 
-  Using all of these informal estimates as a starting point, we conducted a survey of FRC students, alumni, and mentors. We received 65 responses in total, and used the results of this survey to solidify our design criteria. The full response of this survey are presented in \nameref{appendix:survey}. In summary, the median for accuracy was \SI{10}{\centi\meter} in x,y and \ang{5} in yaw. Our survey did not include questions about precision and update rate, because they depend on what position is used for. Instead, we asked if students would try path planning if they had a localization system, which would back up our estimate of precision. Our survey indicated that 90\% of students would try to make the robot autonomously follow paths. Therefore, our precision estimated based on path planning as an application is supported by our survey. Update rate was not addressed in the survey because we didn't think FRC students would have informed opinions on this metric. Finally, we asked several questions about the accessibility requirements. A cost of under \$200 was deemed acceptable by 84.6\% of responses, and so we have made \$200 our goal for cost. Furthermore, we learned that the amount of space in teams shops varies from a 5 by 5 foot space up to several thousand square feet, but the median shop size is 775 $ft^2$, which one can imagine as a 25 by 30 ft space. In terms of access, about 76.5\% of teams could leave up tags or beacons, with the others stating that they must clean up everything because they work in a shared space such as a classroom. Lastly, we asked students what sensors they were familiar with. The most familiar sensors were cameras (90\%), followed by encoders (84.6\%), then IMUs (60\%). Therefore, it would be beneficial to incorporate cameras, encoders, and IMUs because teams are already familiar with them. However, in order to not place extra constraints on sourcing parts, we choose to ignore the constraint that our system meet the FRC-Legal or Off-The-Shelf requirements of FRC.
+  Using all of these informal estimates as a starting point, we conducted a survey of FRC students, alumni, and mentors. We received 65 responses in total, and used the results of this survey to solidify our design criteria. The full response of this survey are presented in \Newnameref{appendix:survey}. In summary, the median for accuracy was \SI{10}{\centi\meter} in x,y and \ang{5} in yaw. Our survey did not include questions about precision and update rate, because they depend on what position is used for. Instead, we asked if students would try path planning if they had a localization system, which would back up our estimate of precision. Our survey indicated that 90\% of students would try to make the robot autonomously follow paths. Therefore, our precision estimated based on path planning as an application is supported by our survey. Update rate was not addressed in the survey because we didn't think FRC students would have informed opinions on this metric. Finally, we asked several questions about the accessibility requirements. A cost of under \$200 was deemed acceptable by 84.6\% of responses, and so we have made \$200 our goal for cost. Furthermore, we learned that the amount of space in teams shops varies from a 5 by 5 foot space up to several thousand square feet, but the median shop size is 775 $ft^2$, which one can imagine as a 25 by 30 ft space. In terms of access, about 76.5\% of teams could leave up tags or beacons, with the others stating that they must clean up everything because they work in a shared space such as a classroom. Lastly, we asked students what sensors they were familiar with. The most familiar sensors were cameras (90\%), followed by encoders (84.6\%), then IMUs (60\%). Therefore, it would be beneficial to incorporate cameras, encoders, and IMUs because teams are already familiar with them. However, in order to not place extra constraints on sourcing parts, we choose to ignore the constraint that our system meet the FRC-Legal or Off-The-Shelf requirements of FRC.
 
   Ultimately, we formulated design criteria based on our own experience with FRC and with localization, as well as by conducting a survey of the needs, experience, and opinions of FRC participants. These design criteria will help us pick which localization techniques to pursue as well as define the goals for our system.
+
+
 
 
 \section{Experimental Results} \label{section:experiments}
@@ -373,7 +395,7 @@
 
   \subsection{Measuring Beacon Delays}
 
-    The beacon system relies on measuring the time it takes for a sound signal to travel from the beacons to the robot. To do this accurately, one must account for transmit and receive delays in addition to the actual time of flight. Figure \ref{fig:rx_tx_timing} illustrates the various delays we need to account for. We conducted experiments to estimate these delays. First, to get an estimate of the radio transmit and receive delay, a transmitter and receiver were set up on two microcontrollers. The transmitter sent \SI{5}{\milli\second} pulses at \SI{433}{\mega\hertz} (no encoded data) every \SI{55}{\milli\second}, and oscilloscope probes were attached to the input pin on the transmitter and the output pin on the receiver. By comparing the time difference between the input and output signals on the oscilloscope, we can determine the total time. Furthermore, we can measure the distance between the transmitter and receiver and subtract the theoretical time of flight from the total time. The full data for these measurements are available in \nameref{appendix:rf-rx-tx}, and an example measurement is shown in Figure \ref{fig:rf_delay_ex}. The time of flight of radio over distances of a new centimeters or meters is on the order of nanoseconds. We measured an average delay of \SI{45.175}{\micro\second}, which we attribute to the internal circuitry of the transmitter and receiver. The variance of this delay was \SI{16}{\micro\second}. However, we also measured delays as low as \SI{32}{\micro\second} and as high as \SI{79}{\micro\second}. Since the theoretical time of flight over the distances used in this experiment were at most \SI{1}{\nano\second}, we can conclude that there is both delay and significant variance in the delay of the transmitters and receivers. This is an important delay to consider when implementing the timing measurement of the beacon signals.
+    The beacon system relies on measuring the time it takes for a sound signal to travel from the beacons to the robot. To do this accurately, one must account for transmit and receive delays in addition to the actual time of flight. Figure \ref{fig:rx_tx_timing} illustrates the various delays we need to account for. We conducted experiments to estimate these delays. First, to get an estimate of the radio transmit and receive delay, a transmitter and receiver were set up on two microcontrollers. The transmitter sent \SI{5}{\milli\second} pulses at \SI{433}{\mega\hertz} (no encoded data) every \SI{55}{\milli\second}, and oscilloscope probes were attached to the input pin on the transmitter and the output pin on the receiver. By comparing the time difference between the input and output signals on the oscilloscope, we can determine the total time. Furthermore, we can measure the distance between the transmitter and receiver and subtract the theoretical time of flight from the total time. The full data for these measurements are available in \Newnameref{appendix:rf-rx-tx}, and an example measurement is shown in Figure \ref{fig:rf_delay_ex}. The time of flight of radio over distances of a new centimeters or meters is on the order of nanoseconds. We measured an average delay of \SI{45.175}{\micro\second}, which we attribute to the internal circuitry of the transmitter and receiver. The variance of this delay was \SI{16}{\micro\second}. However, we also measured delays as low as \SI{32}{\micro\second} and as high as \SI{79}{\micro\second}. Since the theoretical time of flight over the distances used in this experiment were at most \SI{1}{\nano\second}, we can conclude that there is both delay and significant variance in the delay of the transmitters and receivers. This is an important delay to consider when implementing the timing measurement of the beacon signals.
 
     \begin{figure}[H]
       \centering
@@ -456,7 +478,7 @@
       \label{table:optical_flow_benchmark}
     \end{table}
 
-    We performed these measurements 5 times to check for repeatability. From these numbers, we conclude the laptop was just over twice as fast that of the RoboRIO. However, the 12 FPS rate is still fast enough for our project requirements (see Section \ref{section:design_criteria})
+    We performed these measurements 5 times to check for repeatability. From these numbers, we conclude the laptop was just over twice as fast that of the RoboRIO. However, the 12 FPS rate is still fast enough for our project requirements (see Section \ref{section:defining_success})
 
   \subsection{Collecting Ground-Truth with VICON Motion Capture}
 
@@ -518,7 +540,7 @@
 
     \subsubsection{The Doppler Effect on Ultrasonic}
 
-      Using these simulated chirps, we ask the question of whether the doppler effect of a moving FRC robot will make the signal undetectable with simple pattern matching. The plots above show what happens if a doppler shift of a robot moving \SI{5}{\meter\per\second} is introduced. This speed causes a doppler shift of \SI{291.3}{\hertz}, and after applying pattern matching using the unshifted filter we see that the chirp is detected \SI{192.5}{\micro\second} early, which corresponds to \SI{6.6}{\centi\meter} of error, which is within our requirements (see section \ref{section:system_spec}). Furthermore, when the doppler has no effect, the error of our simulated detection is just \SI{2.5}{\milli\meter}, which is well within our requirements.
+      Using these simulated chirps, we ask the question of whether the doppler effect of a moving FRC robot will make the signal undetectable with simple pattern matching. The plots above show what happens if a doppler shift of a robot moving \SI{5}{\meter\per\second} is introduced. This speed causes a doppler shift of \SI{291.3}{\hertz}, and after applying pattern matching using the unshifted filter we see that the chirp is detected \SI{192.5}{\micro\second} early, which corresponds to \SI{6.6}{\centi\meter} of error, which is within our requirements (see section \ref{section:defining_success}). Furthermore, when the doppler has no effect, the error of our simulated detection is just \SI{2.5}{\milli\meter}, which is well within our requirements.
 
     \subsubsection{Effect of Chirp Bandwidth}
 
@@ -587,7 +609,7 @@
 
 	\subsection{Statistics of CSCore Image Timestamps}
 
-    We use the built-in API of CSCore to get the time stamps (in microseconds) for each image captured. During many of our tests, we logged these times to files for offline processing. We now ask how much these time stamps vary from the requested FPS. This is important information to know, because it effects whether or not one can assume a truly constant FPS. We find that there is significant variation between any individual frames. Table \ref{table:fps_stats} shows key statistics about FPS over a multitude of recordings from our test robot. These recordings are taken from our tests at Nypro, with various requested frame rates and at various resolutions.
+    We use the built-in API of CSCore (\url{https://github.com/wpilibsuite/cscore}) to get the time stamps (in microseconds) for each image captured. During many of our tests, we logged these times to files for offline processing. We now ask how much these time stamps vary from the requested FPS. This is important information to know, because it effects whether or not one can assume a truly constant FPS. We find that there is significant variation between any individual frames. Table \ref{table:fps_stats} shows key statistics about FPS over a multitude of recordings from our test robot. These recordings are taken from our tests at Nypro, with various requested frame rates and at various resolutions.
 
     \begin{table}[H]
       \centering
@@ -693,16 +715,18 @@
       \label{table:480p30_pose_estimate_stats}
     \end{table}
 
-    If we consider the 59th percentile metric as our most important metric, we should ask what spacing and resolution/fps settings give acceptably fast update rates. If we desire updates at least every \SI{0.1}{\second} (see section \ref{section:design_criteria} for justification), then we say that 480p60 will be sufficient at any of the tested tag spacings. On the other hand, 1080p15 gives update too infrequently no matter how close tags are spaced. This makes sense, because at 15fps, a tag would need a valid pose estimate in essentially every frame to acheive \SI{0.1}{\second} update rate. Lastly, we can say that 480p30 probably would work with 1.5ft and 3ft spacings, and it becomes slightly too slow at 4.5ft and 6ft spacings. Ultimately, we recommend using 480p60, and suggest a 6ft spacing so as to minimize the modification of the environment.
+    If we consider the 59th percentile metric as our most important metric, we should ask what spacing and resolution/fps settings give acceptably fast update rates. If we desire updates at least every \SI{0.1}{\second} (see section \ref{section:defining_success} for justification), then we say that 480p60 will be sufficient at any of the tested tag spacings. On the other hand, 1080p15 gives update too infrequently no matter how close tags are spaced. This makes sense, because at 15fps, a tag would need a valid pose estimate in essentially every frame to acheive \SI{0.1}{\second} update rate. Lastly, we can say that 480p30 probably would work with 1.5ft and 3ft spacings, and it becomes slightly too slow at 4.5ft and 6ft spacings. Ultimately, we recommend using 480p60, and suggest a 6ft spacing so as to minimize the modification of the environment.
 
     % also compare position estimates between each of the cameras
     % compare graphically over time
     % compare individual points in frames
     % compare covariance after Kalman filtering
 
+	\subsection{Benchmarking ArUco with VICON Motion Capture}
+
 	\subsection{Benchmarking MarkerMapper with VICON Motion Capture}
 
-	\subsection{On Building MarkerMaps}
+	\subsection{Our Experiences with Building MarkerMaps}
 
 	\subsection{Erroneous detections with ArUco}
 
@@ -743,177 +767,64 @@
 		Another important problem is time synchronization. The time stamps on all the data must be in reference to some common time source. To achieve this effect, we use Christian's Algorithm \cite{cristian_probabilistic_1989}. Specifically, we send a packet stamped with the current time on the RoboRIO to the TK1, the TK1 adds its own time stamp and responses, the and RoboRIO then add half the round trip time to the time sent by the TK1. This allows the sensor data sent from the RoboRIO to be synchronized with the clock on the TK1.
 
 
+
+
 \section{A Dataset for Robot Localization} \label{section:dataset}
+
+  \subsection{Provided Tools} \label{section:tools}
+
+
 
 
 \section{Sample Implementation} \label{section:specs}
 
   In order to evaluate the theory and research presented above, we built a complete localization system using an FRC Chassis (courtesy of our sponsor AndyMark), and NavX-MXP IMU (courtesy of Kauai Labs), encoders, and a PS3Eye webcam. In this section, we describe the details of this system and explain the lessons learned from implementing and testing the platform.
 
+  \subsection{Sensing Techniques Used}\label{section:techniques_used}
+
+    Our simple implementation includes three of the five proposed localization techniques (see \Newnameref{section:proposed_techniques}). We used an IMU, Drive wheel encoders, and a Camera with ArUco tags. We chose this subset because they were easy to implement, because they are the most accessable to an FRC team, and because they included both local and global position estimates. We have found examples in the literature of each of these techniques being used successfully, and in some cases our experiments we have verified that they satisfy our criteria for accuracy, precision, update rate, and accessibility criteria.
+
 	\subsection{Robot Hardware}
 
-    A picture of the robot we built can be seen in Figure \ref{fig:mocap_robot}. This robot consists of an AndyMark chassis (am-2240) with Toughbox gearboxes (similar to am-0977), and two sets of 6in wheels. The back wheels are have more traction than the front, which has the platform have more interesting and challenging dynamics--a simple Dubin's car or differential drive model is inaccurate. We use two Greyhill 63R256 encoders with 256 pulses per revolution. Because the gear ratio of our gearboxes is unknown, it was simpler to directly measure distance per pulse, which we found to be \SI{0.000375}{\meter} per pulse.
+    A picture of the robot we built can be seen in Figure \ref{fig:mocap_robot}. This robot consists of an AndyMark chassis (am-2240) with Toughbox gearboxes (similar to am-0977), and two sets of 6in wheels. The back wheels are have more traction than the front, which has the platform have more interesting and challenging dynamics--a simple Dubin's car or differential drive model is inaccurate. We use two \href{https://www.digikey.com/product-detail/en/grayhill-inc/63R256/GH3070-ND/304479}{Greyhill 63R256} encoders with 256 pulses per revolution. Because the gear ratio of our gearboxes is unknown, it was simpler to directly measure distance per pulse, which we found to be \SI{0.000375}{\meter} per pulse.
 
+    \begin{figure}[H]
+      \centering
+      \includegraphics[width=1\linewidth]{./images/mocap_robot.jpg}
+      \caption{An FRC-style robot we used in many of our tests}
+      \label{fig:mocap_robot}
+    \end{figure}
 
 	\subsection{Kalman Filtering}
 
-  \subsection{System Requirements}\label{section:system_spec}
+    In order to fuse measurements from our three sensors, we used an Extended Kalman Filter.
 
-    Based on the extensive literature review, the few preliminary experiments we've conducted, and our design criteria, we eliminated our initial list of possible techniques down to the following five:
+    \subsubsection{Accelerometer Pre-Processing}
+    \subsubsection{Encoder Pre-Processing}
 
-    \begin{enumerate}
-        \item Radio and ultrasonic beacons
-        \item IMU
-        \item Drive wheel encoders
-        \item Optical flow
-        \item Camera with matrix tags
-    \end{enumerate}
+  \subsection{Software Design}
 
-    We have found examples of each of these techniques being used successfully, and in many cases have verified that they satisfy our criteria for accuracy, precision, update rate, and accessibility criteria. We are confident that any combination of these methods would work. These techniques are complementary in their sources of error, and together we believe they will make a robust localization system.
+    There are two software components of our sample implementation. First, there is a a C++ library that is cross-compiled for the RoboRIO that FRC teams will use in their robot projects. We use the standard Eclipse-based C++ development environment and write our robot projects the same way an FRC team would. Teams are expected to call two or three simple functions in their robot program, which gives us everything we need to log sensor data and send it to the co-processor. Because of this minimal API, we require very few changes to robot programs in order to get localization. This would make it approachable for teams and encourage them to try localization. The second software component is a C++ program running on the co-processor. This program reads the camera data from a CSCore camera stream, serves an annotated version of the camera stream, receives the IMU and encoder data from the RoboRIO, computes the position of the robot, and reports this position over network tables. See \ref{fig:software_diagram} for a diagram of this system.
 
-  \subsection{Implementation Details}
-
-    Having decided on the sensing techniques we will use, we now describe our detailed system Specification. Ideally, the description in this section serves as the full plan for our implementation of the system during B Term, and most of the major design decisions have been made and clearly presented.
-
-		\subsubsection{The Test Robot}
-
-			This section describes the hardware and software of the test robots we used throughout our experiments. We use an old FRC Kit-of-parts Chassis with 6" wheels. The rear wheels have high-grip rubber and the front wheels are a slick hard plastic. This creates an interesting uneven turning center, which is a good test-platform for robots that slip when turning. We use two CIM motors to drive the wheels and two Talon speed controllers to drive the CIMs. Our robot also has a RoboRIO and an NVidia brand Jetson TK1, which are networked together with a COTS router. For sensing, we have two Greyhill 63R256 encoders, a cheap 720p USB webcam, and a NavX-MXP. Figure \ref{fig:mocap_robot} shows the fully assembled robot.
-
-			\begin{figure}[H]
-				\centering
-				\includegraphics[width=1\linewidth]{./images/mocap_robot.jpg}
-				\caption{Test Robot used in our experiments}
-				\label{fig:mocap_robot}
-			\end{figure}
-
-			\subsubsection{General Architecture}
-
-			Given the five sensing technologies mentioned above, we will now provide details on the configuration and use of each sensor. The Navx IMU is connected to the RoboRIO, which is the main processor which are FRC teams are required to use. The encoders on the drive train are similarly connected to the digital IO pins on the RoboRIO. These sensors are connected to the RIO directly because they are often used by FRC Teams in their robot programs. We also introduce the NVIDIA Jetson TK1 as a co-processor. The camera is connected via USB-A to the TK1. Because of its superior computational power, the TK1 is responsible for processing all of the raw sensor data and delivering the result back to the main robot program. In this setup, the TK1 can receive sensor data from the RoboRIO over the robot network band from the USB webcam directly.
-
-			There are two software components of our system. First, there is a a C++ library cross-compile for the RoboRIO that FRC teams will use in their robot projects. Teams are expected to call two or three simple functions in their robot program, which gives us everything we need to log sensor data and send it to the TK1. Because of this minimal API, we require very few changes to robot programs in order to get localization. This will make it approachable for teams and encourage them to try localization. The second software component is a C++ program running on the TK1. This program reads the camera data, serves http camera streams, receives the sensor data from the RoboRIO, computes the position of the robot, and reports this position over network tables. Again, the TK1 was chosen for this task because of it's computing power.
-
-    \subsubsection{Accelerometer Processing}
-
-      % describe our final methods for what we're actually doing with the navx data
-
-    \subsubsection{Encoder IMU Fusion}
-
-      The fusion of Encoder and IMU data will be the foundation of our localization system. While we do not plan to explore it too deeply, it will be the first component we work on in B term. The sensors supported will be the Kauai Labs NavX MXP and Micro. The system will not prevent the user from interfacing with either sensor in other ways. The IMU and encoder toolkit will feature an interface for user to input information about their kinematic base, namely wheel radius, wheelbase length, and encoder resolution. Using this information, the system will generate a state space model comprising minimally position and velocity terms. The drivetrain configuration that will be supported is a differential four wheel drive. Support may later be offered for one omnidirectional configuration, such as H-Drive. Using this information, a Kalman and complementary filtering program will be developed. Inputing a sensor configuration in software will allow a team to display local trajectories using a 2-D visualization. The team must be able to quickly modify parameters such as the filtering function used or the radius of a wheel and recalibrate each sensor on-line. This portion of the project must be completed approximately at the start of the FIRST build season.
+    \begin{figure}[H]
+      \centering
+      \includegraphics[width=1\linewidth]{./images/MQP_System_Chart.png}
+      \caption{A diagram of our software}
+      \label{fig:software_diagram}
+    \end{figure}
 
 
 
-      \textbf{Calibration}
-
-      \textbf{Description of the Robot Model}
-
-    \subsubsection{Radio and Ultrasonic Beacons}
-
-      Important implementation details of the beacon system include the number of beacons needed, the radio communications protocol, and the ultrasonic signal format. The number of beacons can either be picked to minimize cost, and then the beacons can be designed to meet this criteria, or the characteristics of the beacons can be determined and the number of beacons needed derived from that. In order to support arbitrary practice areas, the second method is preferred. In this section we cover relevant calculations and possible implementation details for beacons.
-
-      \textbf{Overview of components}
-
-      Each beacon consists of a PSoc5 LP processor, NTX-1004PZ piezo transducer, XY-MK \SI{433}{\mega\hertz} radio transmitter, XY-FST \SI{433}{\mega\hertz} radio receiver, and other supporting components. During normal operation, each beacon will listen for a radio signal telling it to emit an ultrasonic signal. We expect that a few other components such as resistors, LEDs, and a battery will be required for the final beacon.
-
-      \textbf{Format for Ultrasonic Signal}
-
-      The ultrasonic signal should be designed to maximize both the distance it can be detected from and accuracy with which it's timing can be detected. Using a simple pulse of fixed frequency and amplitude is not ideal because it trades off energy transmitted (and thus distance) with accuracy. This is because a longer pulse contained more energy and can be detected from further, but at the same time the receiver cannot distinguish timing within the length of the pulse. Therefore, a chirp signal will be used. Compare the usual function relating amplitude to time of a sine wave to the quadratic chirp signal.
-      $$ x(t) = A\cos(\omega t + \phi) $$
-      $$ x(t) = A\cos\bigg(2\pi\Big(\tfrac{f_1 - f_0}{2T}t^2+f_0t\Big) + \phi\bigg) $$
-
-      This function will generate a chirp with amplitude $A$, starting from frequency $f_0$ going to $f_1$ over time interval $T$. Figure \ref{fig:chirp} shows the specific waveform with the parameters we expect to use. This is a linear chirp signal because the instantaneous frequency of the signal changes linearly with time.
-
-      \begin{figure}[H]
-        \centering
-        \begin{tikzpicture}
-          \begin{axis}[width=12cm,height=6cm]
-            \addplot[domain=-.0002:0,samples=10]{0};
-            \addplot[domain=0:0.001,samples=1000]{sin((2*180*((27000 - 20000)/(2*0.001)*x*x + 20000*x)))};
-            \addplot[domain=0.001:0.0012,samples=10]{0};
-          \end{axis}
-        \end{tikzpicture}
-        \caption{Chirp signal with $\phi=0$, $A=1$, $f_0=\SI{20}{\kilo\hertz}$, $f_1=\SI{27}{\kilo\hertz}$, and $T=\SI{1}{\milli\second}$}
-        \label{fig:chirp}
-      \end{figure}
-
-        This is the waveform we will be emitting from the ultrasonic sensors. The benefit is that it can be high power and still allow the receiver to determine precisely where in the waveform it is listening. One method for doing this is to take the discrete short time Fourier transform, which will show us how the power at various frequencies changes over time. By applying the FFT at a particular instant during the chirp, we can determine the position in time within the chirp of the current FFT. For instance, in the signal above if we apply and FFT at time $t_n=1.0$ and discover high power at frequency $f=\SI{22}{\kilo\hertz}$, we know that the chirp began at time $t_0 = t_n - \tfrac{f - f_0}{f_1 - f_0}T = 1.0 - \tfrac{22-20}{27-20}0.001 = 0.99857$. Another simpler strategy is to slide the waveform you expect to hear across samples of recorded raw input and check for the point of highest correlation. In other words, slide the waveform in Figure \ref{fig:chirp} and match it to the received signal. Both of these techniques are used in practice, and we are considering both in our implementation.
-
-        Our beacon system relies on accurately knowing the distance to a beacon, and therefore knowing exactly when the start of the signal left the transmitter and when the start of the signal arrived at the receiver. Figure \ref{fig:rx_tx_timing} shows the sources of delay we are accounting for, and we describe our methodology for measuring these delays in the \nameref{section:experiments} section. \\
-
-      \begin{figure}
-        \centering
-        \begin{tikzpicture}
-          % timeline for ultrasonic
-          \draw (-1.5, 0) node {ULTRASONIC};
-          \filldraw (0,0) circle (0.05);
-          \draw (0.5, -0.2) node {\tiny TX Delay};
-          \draw (0,0) -- (1,0);
-          \filldraw (1,0) circle (0.05);
-          \draw (5.5, -0.2) node {\tiny Time of flight};
-          \draw (1,0) -- (10,0);
-          \filldraw (10,0) circle (0.05);
-          \draw (10.5, -0.2) node {\tiny RX Delay};
-          \draw (10,0) -- (11,0);
-          \filldraw (11,0) circle (0.05);
-
-          % timeline for radio
-          \draw (-1.5, 1) node {RADIO};
-          \filldraw (0,1) circle (0.05);
-          \draw (0.5, 1.2) node {\tiny TX Delay};
-          \draw (0,1) -- (1,1);
-          \filldraw (1,1) circle (0.05);
-          \draw (1.25, 0.8) node {\tiny Time of flight};
-          \draw (1,1) -- (1.5,1);
-          \filldraw (1.5,1) circle (0.05);
-          \draw (2.0, 1.2) node {\tiny RX Delay};
-          \draw (1.5,1) -- (2.5,1);
-          \filldraw (2.5,1) circle (0.05);
-        \end{tikzpicture}
-        \caption{Timing of radio and ultrasonic signals. Experiments indicate \SI{46.175}{\micro\second} total RF delay and \SI{1}{\milli\second} total ultrasonic delay.}
-        \label{fig:rx_tx_timing}
-      \end{figure}
-
-      \textbf{Path Loss} \\
-      We calculate the free space path loss (FSPL) of the radio signals at the farthest distance from the beacons. For this calculation, we assume the worst case where the beacon is on the other side of the length field, which is $\SI{16.5}{\meter}$ away. Over the more realistic distance of half the width of the field (\SI{5.6}{\meter}), the path loss is only \SI{40}{\decibel}. \\
-      $$ \text{FSPL} = 20\log_{10}\Bigg(\frac{4\pi Rf^2}{c^2}\Bigg) = 20\log_{10}\Bigg(\frac{4\pi*16.5*\SI{433e6}{\hertz}}{\SI{3e8}{\meter\per\second}}\Bigg) = 49.521 $$
-
-      \begin{table}
-        \begin{tabular}{|l|l|}
-          \hline
-          Item & Cost per Beacon \\
-          \hline
-          PSoc 5LP & \$10.00 \\
-          RF Tx/Rx Pair & \$1.68 \\
-          piezo speaker & \$1.65 \\
-          9v battery & \$1.19 \\
-          battery connector & \$0.54 \\
-          LCD display & \$3.90 (optional) \\
-          resistors and capacitors & \$5.00 (estimate) \\
-          prototyping board & \$5.00 (estimate) \\
-          \hline
-          Total & 28.96 \\
-          \hline
-        \end{tabular}
-        \caption{estimated bill of material for beacons}
-        \label{table:beacon_bom}
-      \end{table}
-
-      \textbf{Self-Localization of Beacons} \label{section:beacon_self_localization}
-
-      Beacons that can automatically discover each other and their relative positions will tremendously improve the easy of setup for the beacon system. We believe this is possible, and in this section we describe a protocol for doing so.
-
-      When the first beacon is turned on, it will listen for radio packets for a brief period of time to check if it is the first beacon to be turned on. If it hears nothing, it will assume it is the first beacon and assign itself ID 0. This beacon will be responsible for sending the synchronizing radio pulse as well as handle the distribution of IDs to the other beacons. At this point, beacon 0 will send packets advertising that ID 1 is available. When the next beacon is turned on, it will get the message that ID 1 is available, assign itself that ID, and respond with an ACK message confirming that ID 1 is now taken. Beacon 0 will then begin advertising that ID 2 is available. This process continues for N beacons. Once each beacon has its assigned ID number, beacon 0 will start organizing the self-localization of each beacon. First, beacon 0 will send a packet telling everyone that beacon 0 will transmit ultrasonic. All beacons other than beacon 0 will hear this and start a timer, and beacon 0 will itself transmit ultrasonic. Each beacon will receive this ultrasonic and compute its distance to beacon 0. After waiting a fixed period of time (such as \SI{50}{\milli\second}) for this process to complete, beacon 0 will send a packet telling everyone that beacon 1 will transmit ultrasonic. This process continues until every beacon has recorded its distance to every other beacon. At this point, beacon 0 will tell each beacon sequentially to report its distance calculations to beacon 0. Beacon 0 will then compute the location of every beacons by minimizing the least squares error in the system of equations defining the beacon locations. Finally, it will report the resulting positions to all the beacons. These communications can also be monitors from a laptop with an inexpensive USB software defined radio, such that the status and result of this process can be shown in a GUI and debugging information can be communicated.
-
-      \textbf{Number of Beacons Needed}
-
-      The number of beacons can be decided once the range and beam pattern of the beacons is known. To do this, a rigorous test that measures the sound level at various angles and distance will be performed. Once this is known, we can offer a tool or set of steps to determine how many beacons are needed and where beacons should be placed.
-
-    \subsubsection{User Interface (GUI)}
-
-      As mentioned above, one of our goals is to develop a GUI. This GUI will serve several functions, such as displaying the position of the robot on the field, showing debug information from each subsystem, and allowing students to input parameters about their robot and their practice space. For example, doing forward kinematics with the encoders requires that the position of each wheel and encoder is known. Additionally, the GUI could allow a visual interface for the students to say where and how their practice space maps to the imaginary FRC field.
 
 \section{Conclusion} \label{section:conclusion}
 
+
+
+
 \section{Future Work} \label{section:future_work}
+
+
+
 
 \section{Acknowledgements}
 
