@@ -795,7 +795,7 @@
     \begin{table}[H]
       \centering
       \begin{tabular}{|c|c|c|c|} \hline
-        Error To Tag 0 (m) & Translational (m) & Rotational about X (deg) & Rotational about Z (deg) \\ \hline
+        Error To Tag 0 (m) & Translational (m) & X Rotation (deg) & Z Rotation (deg) \\ \hline
         0.120 & 0.318 & 10.739 & 8.517 \\ \hline
         0.093 & 0.165 & 10.991 & 4.560 \\ \hline
         0.091 & 0.114 & 1.4660 & 3.803 \\ \hline
@@ -821,7 +821,7 @@
 
 	\subsection{Erroneous detections with ArUco}
 
-    Marker Maps must comprise fiducial markers from known "dictionaries" or binary encodings. Examples of a several dictionaries are shown below. Dictionary selection is important because it allows users to optimize their Marker Maps. Users can choose dictionaries with different numbers of tags, marker (square) sizes, and inter-marker distances. Inter-marker distances are determined by the number of tags in the dictionary (high distances correspond to low numbers of tags). High inter-marker distances make detection more robust. Tags are defined by a list of bytes which determine the color of squares. Dictionaries can be further optimized by setting the "maxCorrectionBits" parameter experimentally to reduce false positives\cite{open_source_computer_vision_detection_2015}.
+    Marker Maps must comprise fiducial markers from known ``dictionaries'' or binary encodings. Examples of a several dictionaries are shown below. Dictionary selection is important because it allows users to optimize their Marker Maps. Users can choose dictionaries with different numbers of tags, marker (square) sizes, and inter-marker distances. Inter-marker distances are determined by the number of tags in the dictionary (high distances correspond to low numbers of tags). High inter-marker distances make detection more robust. Tags are defined by a list of bytes which determine the color of squares. Dictionaries can be further optimized by setting the ``maxCorrectionBits'' parameter experimentally to reduce false positives\cite{open_source_computer_vision_detection_2015}.
 
     Throughout our experiments with ArUco tags, we accumulated several examples of detections that were erroneous in some form or another. First, we present examples of tags whose ID is misdetected (Figure \ref{fig:misdetected_tags}). In all these cases the incorrectly detected ID was 2, but there is no evidence that this is an issue just with tag 2 specifically.
 
