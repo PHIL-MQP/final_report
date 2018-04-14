@@ -52,14 +52,14 @@
 
 \subsection{Motivation}
 
-  Knowing the position and orientation of a mobile robot is critical to many tasks, and while there are tried-and-true solutions to many instances of the general localization problem, there remain some environments which are unsolved. In this work, we focus specifically on FRC as a test environment. FRC is a challenging environment because the robots make rapid and aggressive maneuvers by human drivers for part of the time, and at other times are under complete autonomy. Another challenge is that FRC fields are cluttered with other robots and game pieces such as soccer balls, pool noddles, or inflatable shapes, and these objects change from year to year. A successful localization system for FRC must support up to six robots, as well as occlusion from the playing field elements, unpredictable lighting, and frequent impacts. Our research suggests that there are at least five appropriate methods for localization: cameras and tags, radio and ultrasonic beacons, optical flow, dead reckoning with encoders, and dead reckoning with an IMU. All of these methods have seen success in robot localization. Generally, FRC robots do not localize to the field. There are a few teams which do attempt this \cite{balaji_zebravision_2017}, but they lack rigorous analysis and do not compare different methods for localization--their concern is to build something that simply works well enough for their robot and their team. Therefore, we saw the need for a more comprehensive study of localization techniques applicable to GPS-denied environments with fast moving robots and clutter.
+  Knowing the position and orientation of a mobile robot is critical to many tasks, and while there are tried-and-true solutions to many instances of the general localization problem, there remain some environments which are unsolved. In this work, we focus specifically on FRC as a test environment. FRC is a challenging environment because the robots make rapid and aggressive maneuvers by human drivers for part of the time, and at other times are under complete autonomy. Another challenge is that FRC fields are cluttered with other robots and game pieces such as soccer balls, pool noddles, or inflatable shapes, and these objects change from year to year. A successful localization system for FRC must support up to six robots, and must be robust to occlusion from the playing field elements, unpredictable lighting, and frequent impacts. Our research suggests that there are at least five appropriate methods for localization: cameras and tags, radio and ultrasonic beacons, optical flow, dead reckoning with encoders, and dead reckoning with an IMU. All of these methods have seen success in robot localization. Generally, FRC robots do not localize to the field. There are a few teams which do attempt this \cite{balaji_zebravision_2017}, but they lack rigorous analysis and do not compare different methods for localization--their concern is to build something that simply works well enough for their robot and their team. Therefore, we saw the need for a more comprehensive study of localization techniques applicable to GPS-denied environments with fast moving robots and clutter.
 
 
 
 
 \subsection{Problem Statement}
 
-  We are interested in a system for determining the pose $(x, y, \theta)$ of the robot. We are using the FIRST Robotics Competitions (FRC) as the environment for testing the platform. At the highest level, the goal is to allow robots to query their position on the field. This information is a prerequisite for interesting behaviors such as path following, picking up game pieces, navigating to feeder stations, and detecting slips and collisions. An important criteria for our system is that it work well not only on the FRC field, but in teams practice spaces. This means we cannot rely on an \textit{a priori} map of the geometry of the environment, or any other knowledge of the lighting, sound, and surface conditions.
+  We are interested in a system for determining the pose consisting of $x$ and $y$ position and orientation $\theta$ of the robot. At the highest level, the goal is to allow robots to query their aboslute pose on the field. This information is a prerequisite for interesting behaviors such as path following, picking up game pieces, and navigating to feeder stations. An important criteria for our system is that it work well not only on the FRC field, but in teams practice spaces. This means we cannot rely on an \textit{a priori} map of the geometry of the environment, or any other knowledge of the lighting, sound, and surface conditions.
 
   % FIXME:
   % Even though FRC teams do not have a full field to test on, they still need a way to test specific behaviors that are specific to the field. Teams will construct mock-ups of small parts of the field and various game elements to test with. For example, if the game requires shooting basketballs into a hoop, most teams will build or purchase a basketball hoop that is similar to the one used on the field and mount it somewhere in their shop. The important point is that the hoop will likely be mounted in a slightly different position or orientation. Ideally, a localization system fro FRC allow teams to use their mock setup as if it were the real field. In other words, teams could test a program that autonomously shoots balls into the hoop in their shop and later use the same code with confidence in the competition. Teams must be able to specify the location of their mock field elements so that our localization system can report position that is relative to this hallucinated version of the field.
@@ -81,7 +81,7 @@
 
 \section{Survey of Localization Techniques} \label{section:related_work}
 
-   Overall, the problem of localizing a mobile robot can be viewed as accurately measuring the absolute distance to known landmarks, or by measuring the changes in position over time. All localization methods lie somewhere on a spectrum between these two approaches, and we will henceforth refer to these two ideas as global and local pose estimation. Some of the high level techniques for robot localization are: measuring range at various points around the robot and matching these readings to a map, measuring time of flight or difference of arrival time to calculate distances to known locations, recognizing landmarks and computing pose relative to those landmarks, and measuring changes in pose and accumulating these changes over time. There are different sensors that can be used for each of these techniques, such as laser range finders, cameras, inertial measurement units (IMU), encoders, radio, infrared light, visible light, ultrasonic and audible sound. Although there are a tremendous number of possible methods for indoor mobile robot localization, there are a few which have received the most attention and shown the most success. These include, but are not limited to:
+   In this section we provide an overview of the most common and applicable localization techniques. Overall, the problem of localizing a mobile robot can be viewed as accurately measuring the absolute distance to known landmarks, or by measuring the changes in position over time. All localization methods lie somewhere on a spectrum between these two approaches, and we will henceforth refer to these two ideas as global and local pose estimation. Some of the high level techniques for robot localization are: measuring range at various points around the robot and matching these readings to a map, measuring time of flight or difference of arrival time to calculate distances to known locations, recognizing landmarks and computing pose relative to those landmarks, and measuring changes in pose and accumulating these changes over time. There are different sensors that can be used for each of these techniques, such as laser range finders, cameras, inertial measurement units (IMU), encoders, radio, infrared light, visible light, ultrasonic and audible sound. Although there are a tremendous number of possible methods for indoor mobile robot localization, there are a few which have received the most attention and shown the most success. These include, but are not limited to:
   \begin{itemize}
     \item LIDAR mapping
     \item Ultrasonic mapping
@@ -204,7 +204,7 @@
 
   Ultrasonic mapping has this same issue. Both LIDAR and ultrasonic mapping would work best if teams to place walls up to create a ``pen'' for the robot of known geometry to use as a map, and for this reason we believe LIDAR and ultrasonic mapping are unfit. Another major issue with ultrasonic mapping is the interference between robots. If multiple robots range ultrasonic near one another, there could be cross talk and interference between the signals. This is reason enough to rule out any use of reflecting ultrasonic. Note however that ultrasonic beacons do not have this weakness, since the pulses being emitted are being timed based on line-of-sight travel with so any reflections can and should be ignored.
 
-  IMUs within the budget of FRC teams suffer from accumulated drift, and as such they cannot be used in isolation (see \ref{section:navx_accuracy}). On the other hand, many FRC students have experience with them, so it would be wise to support basic features such as heading detection and filtering using IMUs. IMUs also compliment other localization techniques very well. For example, cameras suffer from the jitter of the robot moving, and encoders fail when the wheels slip. IMUs on the other hand are excellent at detecting jitter and slippage. In this way, an IMU is a good complement to cameras and encoders.
+  IMUs within the budget of FRC teams suffer from accumulated drift, and as such they cannot be used in isolation (see \ref{section:double_integration_is_inaccurate}). On the other hand, many FRC students have experience with them, so it would be wise to support basic features such as heading detection and filtering using IMUs. IMUs also compliment other localization techniques very well. For example, cameras suffer from the jitter of the robot moving, and encoders fail when the wheels slip. IMUs on the other hand are excellent at detecting jitter and slippage. In this way, an IMU is a good complement to cameras and encoders.
 
   Radio and ultrasonic beacons are very attractive because of their low cost and ability to automatically locate each other. The cost of each beacon are projected to cost about \$30 (see \ref{table:beacon_bom}). Furthermore, beacons have more flexibility in their placement than tags because they are much smaller and do not need to be on flat surfaces, or in specific orientations. Finally, because each beacon can operate as a transmitter or a receiver, beacons can automatically locate each other, which means students will not have to measure their positions or worry about them being accidentally bumped. A procedure for building a map of beacons is described in section \ref{section:beacon_self_localization}. Beacons also make up for some flaws in the other techniques. Beacons provide absolute global position but updates slowly, which nicely complements IMU and encoder methods which are fast but only measure changes in position. Additionally, beacons are more resistant to jitter than cameras. Finally, by placing the beacons and cameras in different locations we can minimize the effect of occlusion.
 
@@ -370,24 +370,127 @@
 
   \subsection{Characterising Drift and Bias in the Accelerometer}
 
-    \subsubsection{Measuring the drift and bias in the accelerometer}
+    After confirming experimentally that integrating accelerometer readings would be innacurate, we explore the well known techniques of drift compensation and zero velocity updates. Before testing these directly, we first categorize just how much bias there is in our accelerometer, and how that bias changes over time.
 
-    % report the drifts and biases we saw in the circles test and in the
-    % talk about how there weren't any obvious trends in bias
-    % discuss the static tests you did where the rio was stationary, and report how much you say it drifting
-    % we can do the same for the nypro stuff, showing how drift effects velociton and position as you integrate/double integrate
+    \subsubsection{Measuring the drift and bias in the accelerometer} \label{section:drift_bias}
+
+      Compensating for the accelerometer drift is important in IMU localization since double integration of accelerometer data amplifies any inaccuracies. We first performed an experiment to study the drift of accelerometer when it is stationary. We put the accelerometer on a flat surface for 6 minutes and collected the data at \SI{100}{\hertz} (see Figure \ref{fig:static_test}). Then, we calculated the average accelerometer value of the first 500 samples and the last 500 samples in the x and y axes. The difference of mean values of first 500 samples and last 500 sample in x, y, z axes are -0.000475g, 0.000158g, 0.000323g respectively. For reference, we note that the maximum drift of -0.00475g, or \SI{-0.00465}{\meter\per\second\squared} would cause a position error of $0.5*-0.00465*3^2=$\SI{-0.020948}{\meter} over a 3 second period. In other words, if the NavX is stationary, even if the initial bias of the accelerometer is zero, the position could drift up to \SI{2}{\centi\meter} over 3 seconds.
+
+      \begin{figure}[H]
+        \centering
+        \includegraphics[width=1\linewidth]{./images/static_test.png}
+        \caption{The raw measured X acceleration (Gs) and its mean over first and last 500 sample periods while stationary.}
+        \label{fig:static_test}
+      \end{figure}
+
+      We then wondered that whether the duration of motion influences the amount of drift, so we performed another experiment. We drove the robot in a circle, stopped for 9 seconds, drove the robot in 2 circles, stopped for 9 second, so on until the robot drove for 5 circles in a row. We will refer to this test as the ``Nypro Circles'' test. This allows us to see whether moving for longer periods of times will cause more drift. We collected the accelerometer data, fused yaw measurement, and temperature. Using this data, we plot the mean accelerometer value in each of the static intervals to see if there is a clear trend (see Figure \ref{fig:static_means}). Based on these means, we can say that the NavX accelerometer drifted a lot between static intervals. However, there is no simple linear trend between the duration of motion.
+
+      \begin{figure}[H]
+        \centering
+        \includegraphics[width=1\linewidth]{./images/static_means.png}
+        \caption{The means of the accelerometer data in world-frame X and Y in each static interval.}
+        \label{fig:static_means}
+      \end{figure}
+
+      Having measured the accelerometer bias and studied its drift, we then integrated the accelerometer data with yaw angles of the ``Nypro Circles'' test to see how these effect the position. To get the best results possible, we also apply our calibration parameters (see \ref{section:imu_calibration}). When integrating to get position, we rotate the robot into the world frame using the yaw angles come from the \texttt{GetYaw()} function of the NavX API, which is very accurate (see \ref{section:yaw_accuracy}. Figure \ref{fig:calibrated_velocity} and \ref{fig:calibrated_displacement} show that bias and drift make velocity and displacement inaccurate after only a short period of motion.
+
+      \begin{figure}[H]
+        \centering
+        \includegraphics[width=1\linewidth]{./images/calibrated_velocity.png}
+        \caption{Velocity as derived by integrating the calibrated accelerometer measurements.}
+        \label{fig:calibrated_velocity}
+      \end{figure}
+
+      \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.6\linewidth]{./images/calibrated_displacement.png}
+        \caption{Displacement as derived by twice-integrating the calibrated accelerometer measurements.}
+        \label{fig:calibrated_displacement}
+      \end{figure}
+
+      Since temperature could also be a factor that affects accelerometer values, we compared the temperature with accelerometer values in static intervals over time. Shown in Figure \ref{fig:temperature}, the temperature increased when the robot was static and decreased when the robot was in motion. However, temperature does not have a straightforward relationship with accelerometer bias or drift in bias.
+
+      \begin{figure}[H]
+        \centering
+        \includegraphics[width=1\linewidth]{./images/temperature.png}
+        \caption{A Plot of temperature recorded by the NavX over the duration of our test.}
+        \label{fig:temperature}
+      \end{figure}
+
+      Overall, our experiments showed that the accelerometer is subject to bias, and that these biases drift over periods of motion. Because of these errors, the double integration becomes inaccurate after a very short duration of motion. Furthermore, we show that the magnitude and direction of this drift has no straightforward relationship with the duration of motion or temperature. We now present several approaches for handling these sources of error and describe our results applying them to this data.
+
+    \subsubsection{Zero Velocity Updates} \label{section:zero_velocity_updates}
+
+      Looking at the calibrated velocity plots (Figure \ref{fig:calibrated_velocity}), clearly there is still bias in the accelerometer readings which are causing the velocity to drift up and down during intervals of motion. We now apply zero velocity updates to the data to mitigate this. Our zero velocity updates work as such: when the static detector indicates the robot is stationary, calculate the bias in that static interval, remove that bias from the static interval and the following dynamic interval, and finally set the current velocity estimate to be zero. %TODO: add more details or math on how precisely this is done
+
+      \begin{figure}[H]
+        \centering
+        \includegraphics[width=1\linewidth]{./images/bias-compt-velocity.png}
+        \caption{Velocity after bias during static intervals is removed.}
+        \label{fig:bias-removed}
+      \end{figure}
+
+      \begin{figure}[H]
+        \centering
+        \includegraphics[width=1\linewidth]{./images/zeroed-velocity.png}
+        \caption{Velocity after both applying bias and zeroing velocity estimates.}
+        \label{fig:zeroed_velocity}
+      \end{figure}
 
     \subsubsection{Drift Compensation}
 
-    % then, explain what we tried to do to compensate for drift, and why it didn't really fix it
+      Having compensated for the biases found during static intervals, we now wonder whether we can account for the drift between these static interval biases. As was shown in Section \ref{section:drift_bias}, there is no clear trend in how the motions change between or within static intervals. This means we cannot hope to find any one drift rate and apply it to the entire stream of accelerometer data. However, there are two other possible ways to account for drift looking only at a single static interval or a single pair of static intervals. The first method is to calculate the drift rates \textit{between} two sequential static intervals, and apply drift compensation starting from the static interval and up until the next static interval. This method is an offline method since it requires knowing the future accelerometer data to account for the drift in the current data. Because this method requires future data, it is not possible to implement in our system in real time. The second method is to calculate the drift rate \textit{within} a static interval and project this drifting behavior on both the static interval and the following dynamic interval. This method is online because it only requires current and past accelerometer readings. Both of these methods offer no significant improvement, but we report them for completeness. These two methods are plotted below, with the original data (only calibration applied, no drift compensation) shown for comparison (Figures \ref{fig:calibrated_velocity_ref}, \ref{fig:offline_drift_compensation}, \ref{fig:online_drift_compensation}).
 
-    \subsubsection{Zero Velocity Updates}
-    % talk about how zero velocity udpates improve double integration/position
+      \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\linewidth]{./images/calibrated_velocity.png}
+        \caption{Velocity as derived by integrating the calibrated accelerometer measurements.}
+        \label{fig:calibrated_velocity_ref}
+      \end{figure}
 
-  \subsection{Comparing Our IMU Localization to the NavX API} \label{section:navx_accuracy}
+      \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\linewidth]{./images/offline_drift_compensation.png}
+        \caption{Velocity where drift is calculated between static intervals}
+        \label{fig:offline_drift_compensation}
+      \end{figure}
 
-    % FIXME: how good is GetWorldX? Show mocap + nypro circles results
-    % eventually also compare using with old/new mocap data
+      \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\linewidth]{./images/online_drift_compensation.png}
+        \caption{Velocity where drift is calculated within static intervals}
+        \label{fig:online_drift_compensation}
+      \end{figure}
+
+  \subsection{Comparing Our IMU Localization to the NavX API}
+
+		% TODO: also compare using with new mocap data
+
+		We compare our method for localization with only the IMU against the \texttt{GetWorldX()} and \texttt{GetWorldY()} functions provided by the NavX. These functions differ from our methods because they do not include zero velocity updates or drift compensation. We also apply our own calibration parameters to our data, which differs from the internal calibration done by the NavX. As is shown in the Figure \ref{fig:displacement_comparison}, both methods drift significantly over the course of our experiment (``Nypro Circles'', described in Section \ref{section:drift_bias}). For reference, in this test our robot was driven in circles with a constant left-right wheel speed difference. However, when we zoom in to the first thirty seconds of the data, we see our method better preserves the sinusoidal nature of the motion, whereas the NavX position constructs lots of straight edges. Furthermore, zooming in to the first three seconds highlights that our method is significantly more accurate.
+
+		\begin{figure}[H]
+			\centering
+			\includegraphics[width=0.49\linewidth]{./images/navx-displacement.png}
+			\includegraphics[width=0.49\linewidth]{./images/zeroed-displacement.png}
+			\caption{Comparison between NavX (left) and our method (right) over the entire experiment.}
+			\label{fig:displacement_comparison}
+		\end{figure}
+
+		\begin{figure}[H]
+			\centering
+			\includegraphics[width=0.49\linewidth]{./images/navx-displacement-30s.png}
+			\includegraphics[width=0.49\linewidth]{./images/zero-displacement-30s.png}
+			\caption{Comparison between NavX (left) and our method (right) over the first 30 seconds of the experiment.}
+			\label{fig:displacement_comparison_30s}
+		\end{figure}
+
+		\begin{figure}[H]
+			\centering
+			\includegraphics[width=0.49\linewidth]{./images/navx-displacement-3s.png}
+			\includegraphics[width=0.49\linewidth]{./images/zero-displacement-3s.png}
+			\caption{Comparison between NavX (left) and our method (right) over the first 3 seconds of the experiment.}
+			\label{fig:displacement_comparison_3s}
+		\end{figure}
 
   \subsection{Measuring Beacon Delays}
 
@@ -550,7 +653,7 @@
       \label{table:optical_flow_benchmark}
     \end{table}
 
-    We performed these measurements 5 times to check for repeatability. From these numbers, we conclude the laptop was just over twice as fast that of the RoboRIO. However, the 12 FPS rate is still fast enough for our project requirements (see Section \ref{section:defining_success})
+    We performed these measurements 5 times to ensure repeatability. From these numbers, we conclude the laptop was just over twice as fast that of the RoboRIO. Based on our results from section \ref{section:fps}, we conclude that 12 FPS is not fast enough for our project requirements and so a co-processor is needed.
 
   \subsection{Collecting Ground-Truth with VICON Motion Capture} \label{section:mocap}
 
@@ -608,7 +711,9 @@
 
     \subsubsection{The Doppler Effect on Ultrasonic}
 
-      Using these simulated chirps, we ask the question of whether the doppler effect of a moving FRC robot will make the signal undetectable with simple pattern matching. The plots above show what happens if a doppler shift of a robot moving \SI{5}{\meter\per\second} is introduced. This speed causes a doppler shift of \SI{291.3}{\hertz}, and after applying pattern matching using the unshifted filter we see that the chirp is detected \SI{192.5}{\micro\second} early, which corresponds to \SI{6.6}{\centi\meter} of error, which is within our requirements (see section \ref{section:defining_success}). Furthermore, when the doppler has no effect, the error of our simulated detection is just \SI{2.5}{\milli\meter}, which is well within our requirements.
+      %TODO review this section. some of it is WRONG
+
+      Using these simulated chirps, we ask the question of whether the doppler effect of a moving FRC robot will make the signal undetectable with simple pattern matching. The plots above show what happens if a doppler shift of a robot moving \SI{3}{\meter\per\second} is introduced. This speed causes a doppler shift of \SI{291.3}{\hertz}, and after applying pattern matching using the unshifted filter we see that the chirp is detected \SI{192.5}{\micro\second} early, which corresponds to \SI{6.6}{\centi\meter} of error, which is within our requirements (see section \ref{section:defining_success}). Furthermore, when the doppler has no effect, the error of our simulated detection is just \SI{2.5}{\milli\meter}, which is well within our requirements.
 
     \subsubsection{Effect of Chirp Bandwidth}
 
@@ -711,7 +816,7 @@
       \label{fig:fps_plot_1}
     \end{figure}
 
-	\subsection{Effect of Frame Rate and Resolution on ArUco Tag Detection}
+  \subsection{Effect of Frame Rate and Resolution on ArUco Tag Detection} \label{section:fps}
 
     We explore the effect of frame rate and resolution on the frequency with which tags are detected. This frequency of detected tags is an important metric because it sets the standard for how long our dead-reckoning methods must run without receiving an update to compensate for drift. Furthermore, since the FPS and resolution of a camera correlates with cost, we want to know whether a cheap camera is sufficient for tag detection.
 
@@ -867,7 +972,7 @@
   \begin{table}[H]
     \centering
     \begin{tabular}{|c|c|c|c|c|} \hline
-      name (hyperlink) & ground truth? & camera? & map? & timestamps? \\ \hline
+      name (hyperlink) & ground truth & camera & map & timestamps \\ \hline
       \href{https://users.wpi.edu/~pdmitrano/phil-datasets/turtlebot_mocap_complete.tar.gz}{\texttt{turtlebot\_complete}} & Y & Y & Y & Y \\ \hline
     \end{tabular}
     \label{table:datasets}
@@ -883,7 +988,7 @@
 
 \section{Sample Implementation} \label{section:specs}
 
-  In order to evaluate the theory and research presented above, we built a complete localization system using an FRC Chassis (courtesy of our sponsor AndyMark), and NavX-MXP IMU (courtesy of Kauai Labs), encoders, and a PS3Eye webcam. In this section, we describe the details of this system and explain the lessons learned from implementing and testing the platform.
+  In order to evaluate the theory and research presented above, we built a complete localization system using a RoboRIO (courtsey of our sponsor National Instruments), an FRC Chassis (courtesy of AndyMark), and NavX-MXP IMU (courtesy of Kauai Labs), encoders, and a PS3Eye webcam. In this section, we describe the details of this system and explain the lessons learned from implementing and testing the platform.
 
   \subsection{Sensing Techniques Used}\label{section:techniques_used}
 
@@ -933,8 +1038,18 @@
 
 \section{Acknowledgements}
 
-  We thank our advisors, Bradley Miller and William Michalson for their guidance. We also thank our sponsors, AndyMark and Kauai Labs for their generous donation of hardware. We'd like to thank Scott Libert and Eric Peters for their advice. Finally, we give a special thank you to FRC Team 261 Gael Force, for letting us use their practice FRC field.
+  We thank our advisors, Bradley Miller and William Michalson for their guidance. We also thank our sponsors, National Instruments, AndyMark, and Kauai Labs for their generous donation of hardware. We'd like to thank Scott Libert and Eric Peters for their advice. Finally, we thank FRC Team 261 Gael Force for letting us use their practice FRC field.
 
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.30\linewidth]{./images/ni_logo_2c.png}
+    \hspace*{0.1in}
+    \includegraphics[width=0.25\linewidth]{./images/Logo_Type_KauaiLabs_BuildBetterRobots_TrademarkSmaller.png}
+    \hspace*{0.1in}
+    \includegraphics[width=0.30\linewidth]{./images/AndyMark_MedWeb.jpg}
+    \caption*{}
+    \label{fig:sponsors}
+  \end{figure}
 
 \bibliographystyle{plain}
 \bibliography{phil-mqp}
