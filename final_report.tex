@@ -1,6 +1,7 @@
 \documentclass{article}
 \usepackage[margin=1.5in]{geometry}
 \usepackage{amsmath}
+\usepackage{lipsum}
 \usepackage{caption}
 \usepackage{float}
 \usepackage{subfig}
@@ -47,32 +48,33 @@
 
 \section{Introduction}
 
+  \subsection{Motivation}
 
+    Knowing the position and orientation of a mobile robot is critical to many tasks, and while there are tried-and-true solutions to many instances of the general localization problem, there remain some environments which are unsolved. In this work, we focus specifically on FRC as a test environment. FRC is a challenging environment because the robots make rapid and aggressive maneuvers by human drivers for part of the time, and at other times are under complete autonomy. Another challenge is that FRC fields are cluttered with other robots and game pieces such as soccer balls, pool noddles, or inflatable shapes, and these objects change from year to year. A successful localization system for FRC must support up to six robots, and must be robust to occlusion from the playing field elements, unpredictable lighting, and frequent impacts. Our research suggests that there are at least five appropriate methods for localization: cameras and tags, radio and ultrasonic beacons, optical flow, dead reckoning with encoders, and dead reckoning with an IMU. All of these methods have seen success in robot localization. Generally, FRC robots do not localize to the field. There are a few teams which do attempt this \cite{balaji_zebravision_2017}, but they lack rigorous analysis and do not compare different methods for localization--their concern is to build something that simply works well enough for their robot and their team. Therefore, we saw the need for a more comprehensive study of localization techniques applicable to GPS-denied environments with fast moving robots and clutter.
 
+  \subsection{Problem Statement}
 
-\subsection{Motivation}
+    We are interested in a system for determining the pose consisting of $x$ and $y$ position and orientation $\theta$ of the robot. At the highest level, the goal is to allow robots to query their aboslute pose on the field. This information is a prerequisite for interesting behaviors such as path following, picking up game pieces, and navigating to feeder stations. An important criteria for our system is that it work well not only on the FRC field, but in teams practice spaces. This means we cannot rely on an \textit{a priori} map of the geometry of the environment, or any other knowledge of the lighting, sound, and surface conditions.
 
-  Knowing the position and orientation of a mobile robot is critical to many tasks, and while there are tried-and-true solutions to many instances of the general localization problem, there remain some environments which are unsolved. In this work, we focus specifically on FRC as a test environment. FRC is a challenging environment because the robots make rapid and aggressive maneuvers by human drivers for part of the time, and at other times are under complete autonomy. Another challenge is that FRC fields are cluttered with other robots and game pieces such as soccer balls, pool noddles, or inflatable shapes, and these objects change from year to year. A successful localization system for FRC must support up to six robots, and must be robust to occlusion from the playing field elements, unpredictable lighting, and frequent impacts. Our research suggests that there are at least five appropriate methods for localization: cameras and tags, radio and ultrasonic beacons, optical flow, dead reckoning with encoders, and dead reckoning with an IMU. All of these methods have seen success in robot localization. Generally, FRC robots do not localize to the field. There are a few teams which do attempt this \cite{balaji_zebravision_2017}, but they lack rigorous analysis and do not compare different methods for localization--their concern is to build something that simply works well enough for their robot and their team. Therefore, we saw the need for a more comprehensive study of localization techniques applicable to GPS-denied environments with fast moving robots and clutter.
+  \subsection{FIRST Robotics Competition} \label{section:frc}
 
+    The FIRST Robotics Competition is an international high school aged robotics comeptition:
+    \begin{quotation}
+      ``Under strict rules, limited resources, and an intense six-week time limit, teams of students are challenged to raise funds, design a team brand, hone teamwork skills, and build and program industrial-size robots to play a difficult field game against like-minded competitors.'' \cite{kamen_first_2015}.
+    \end{quotation}
 
+    Each year, a new game is designed for the teams to tackle. However, the field remains a constant size of 54'3" long by 26'3" wide. This field can contain walls, ramps, towers, or any other number of obstacles from year to year. A rendering of the 2018 field is shown in Figure \ref{fig:frc_field}. Furthermore, the field usually contains small balls or other game pieces that the robots must manipulate. In preparation for these competitions, teams will often build mock field elements or game pieces to practice with in their shops. These practice spaces vary trenendously in size and in terms of how the team can operate in the space (see \ref{appendix:survey}, \ref{section:defining_success}). The robots built for these competitions are typically several feet in every direction, with differential or mechanum drive, and can usually drive up to \si{4}{\meter\per\second}. Each match begins with a breif 15 second autonomous period, and continues with roughly 2 minutes of teleoperated control.
 
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{./images/FIRST_2018_field.jpg}
+    \caption{the FIRST Robotics 2018 Competition Field}
+    \label{fig:frc_field}
+  \end{figure}
 
-\subsection{Problem Statement}
+  \subsection{Key Contributions}
 
-  We are interested in a system for determining the pose consisting of $x$ and $y$ position and orientation $\theta$ of the robot. At the highest level, the goal is to allow robots to query their aboslute pose on the field. This information is a prerequisite for interesting behaviors such as path following, picking up game pieces, and navigating to feeder stations. An important criteria for our system is that it work well not only on the FRC field, but in teams practice spaces. This means we cannot rely on an \textit{a priori} map of the geometry of the environment, or any other knowledge of the lighting, sound, and surface conditions.
-
-  % FIXME:
-  % Even though FRC teams do not have a full field to test on, they still need a way to test specific behaviors that are specific to the field. Teams will construct mock-ups of small parts of the field and various game elements to test with. For example, if the game requires shooting basketballs into a hoop, most teams will build or purchase a basketball hoop that is similar to the one used on the field and mount it somewhere in their shop. The important point is that the hoop will likely be mounted in a slightly different position or orientation. Ideally, a localization system fro FRC allow teams to use their mock setup as if it were the real field. In other words, teams could test a program that autonomously shoots balls into the hoop in their shop and later use the same code with confidence in the competition. Teams must be able to specify the location of their mock field elements so that our localization system can report position that is relative to this hallucinated version of the field.
-
-
-
-
-\subsection{Key Contributions}
-
-  We contribute a survey of localization techniques applicable to FRC-like environments, a set of metrics which define a successful localization system for FRC, a suite of 24 experiments (see \Newnameref{section:experiments}) spanning many different different sensing methods, a dataset of robot sensory readings and associated ground-truth positions, and a sample implementation of a full localization system based on all this knowledge. We also evaluate the MarkerMapper tool for building large maps of many ArUco fiducial markers, and provide an array of tools for collecting and analyzing encoder, IMU, and camera data.
-
-  % TODO: outline the report here
-	% This report begins with a review of existing literature on indoor localization for mobile robots in the \Newnameref{section:related_work} section. The strengths and weaknesses of these existing methods are described in the \Newnameref{section:trade_off_analysis} section. The \Newnameref{section:experiments} section contains information on experiments we conducted. The \Newnameref{section:specs} section provides a complete description of our design criteria and system specifications. The \Newnameref{section:conclusion} section details our plan moving forward.
+    We contribute a survey of localization techniques applicable to FRC-like environments, a set of metrics which define a successful localization system for FRC, a suite of 24 experiments (see \Newnameref{section:experiments}) spanning many different different sensing methods, a dataset of robot sensory readings and associated ground-truth positions, and a sample implementation of a full localization system based on all this knowledge. We also evaluate the MarkerMapper tool for building large maps of many ArUco fiducial markers, and provide an array of tools for collecting and analyzing encoder, IMU, and camera data.
 
 \tableofcontents
 
@@ -978,22 +980,40 @@
 
 \section{A Dataset for Robot Localization} \label{section:dataset}
 
-  We have collected a corpus of sensor data and ground-truth position labels from many of the tests performed for this MQP. In this section, we document the different collections of data and indicate how it could be used in the development of localization systems.
+  We have collected a corpus of sensor data and ground-truth position labels from many of the tests performed for this MQP. In this section, we document the different collections of data and indicate how it could be used in the development of localization systems. Note that any details not listed here, such as exact column headings or detailed descriptions of how the data was collected, are contained in the \texttt{README.md} files of each respective dataset.
 
   \begin{table}[H]
     \centering
-    \begin{tabular}{|c|c|c|c|c|} \hline
-      name (hyperlink) & ground truth & camera & map & timestamps \\ \hline
-      \href{https://users.wpi.edu/~pdmitrano/phil-datasets/turtlebot_mocap_complete.tar.gz}{\texttt{turtlebot\_complete}} & Y & Y & Y & Y \\ \hline
-      \href{https://users.wpi.edu/~pdmitrano/phil-datasets/turtlebot_mocap_complete.tar.gz}{\texttt{turtlebot\_complete}} & Y & Y & Y & Y \\ \hline
+    \begin{tabular}{|l|l|} \hline
+      dataset name (url) & brief description \\ \hline
+      \href{https://users.wpi.edu/~pdmitrano/phil-datasets/turtlebot_mocap_complete.tar.gz}{\texttt{turtlebot\_complete}} & full sensor data with maps in ground truth\\ \hline
+      \href{https://users.wpi.edu/~pdmitrano/phil-datasets/field_data_1.tar.gz}{\texttt{field\_data\_1}} & realistic driving data and multiple video stream \\ \hline
+      \href{https://users.wpi.edu/~pdmitrano/phil-datasets/field_data_2.tar.gz}{\texttt{field\_data\_2}} & realistic driving data and multiple video stream \\ \hline
+      \href{https://users.wpi.edu/~pdmitrano/phil-datasets/field_data_3.tar.gz}{\texttt{field\_data\_3}} & realistic driving data and multiple video stream \\ \hline
+      \href{https://users.wpi.edu/~pdmitrano/phil-datasets/imu_calibration.tar.gz}{\texttt{imu\_calibration}} & Raw accelerometer and gyroscope readings \\ \hline
+      \href{https://users.wpi.edu/~pdmitrano/phil-datasets/markermaps.tar.gz}{\texttt{markermaps}} & Marker maps build in motion capture and on an FRC field \\ \hline
     \end{tabular}
     \label{table:datasets}
   \end{table}
 
-  The dataset \texttt{turtlebot\_complete} consists of 9 trials of a Turtlebot 2 driving under teleoperated control with tags placed in a perimeter around the motion capture area. For each trial, we have recordings of camera frames at two different settings (480p 60fps and 1080p 30fps), encoder ticks from the kobuki base, and accelerometer, gyroscope, fused yaw, and temperature data from the RoboRIO. We have corresponding ground-truth labels for both the position of the robot, and the tags placed around the environment. We also provide three different maps built with the tags. One map was built with a C920, and the other two were built with a PS3Eye camera. The maps are quite different, despite being built back-to-back with the same general procedure. This demonstrates that the quality of the map produced is highly dependant on the which tags were seem with which other tags. In our experience, building markermaps is a highly unreliable process, so we include multiple maps to demonstrate this.
+  The dataset \texttt{turtlebot\_complete} consists of 9 trials of a Turtlebot 2 driving under teleoperated control with tags placed in a perimeter around the motion capture area. For each trial, we have recordings of camera frames at two different settings (480p 60fps and 1080p 30fps), encoder ticks from the kobuki base, and accelerometer, gyroscope, fused yaw, and temperature data from the RoboRIO. We have corresponding ground-truth labels for both the position of the robot, and the tags placed around the environment. We also provide three different maps built with the tags. One map was built with a C920, and the other two were built with a PS3Eye camera. The maps are quite different, despite being built back-to-back with the same general procedure. This demonstrates that the quality of the map produced is highly dependant on the which tags were seem with which other tags. In our experience, building markermaps is a highly unreliable process (see \ref{section:building_maps_sucks}), so we include multiple maps to demonstrate this.
+
   The \texttt{field\_data\_2} and \texttt{field\_data\_3} datasets were collected Team 126's practice FRC field (Sponsored by Nypro Inc.). In each of those two datasets, we ran one trial called \texttt{auto} where the robot drive in a series of concentric circles with static intervals in between, as well as a series called \texttt{drive} of realistic FRC driving patterns for about one minute. To simulate FRC driving patterns, we drove the robot to and from mock ``Switch'', ``Scale'', and ``Feeder Station'' field elements (from the 2018 FRC game). The driver during these tests participated in FRC for two years, and so we claim from experience that these driving patterns are realistic. During both the \texttt{auto} and \texttt{drive} trials, we recorded time stamped image frames from three camera as different resolutions and frame rates. Additionally, we recorded acceleration, rotational velocity, yaw angle, and motor set values from the NavX IMU plus encoder data from the drive wheels.
 
+  In the \texttt{imu\_calibration} dataset, we include 6 logs of raw accelerometer and gyroscope readings taking according to our calibration procedure (see \ref{section:imu_calibration}, also \cite{tedaldi_robust_2014}). Generally, each of these logs contains a series of sample taken at a fixed rate consisting of a number of static intervals with dynamic motion between them. In fact, you can reproduce the exact calibration values we use in our sample implementation using the \texttt{imu\_calibration\_data\_1\_28\_final.csv} file as input to the \texttt{python/recorded\_data\_processing/imu\_calibration.py} script. In addition, we also include 5 logs of pure stationary IMU data. This can be useful for measuring bias and testing basic data processing.
+
+  We also release a set of example markermaps we have built in the \texttt{markermaps} dataset. Unfortunately, we do not have the accompanying video used the build that map. Nonetheless, we hope that these maps can be used by others to see how the map files are structured and to test the API the uses them. This dataset consists of 11 marker maps. 10 of these were built in our the motion capture arena, of which three have ground-truth tag pose information from the motion capture. Our last markermap was built at the Nypro test FRC field (used by FRC Team 261).
+
+
   \subsection{Provided Tools} \label{section:tools}
+
+    In order to conduct analysis on all the above mentioned datasets, we wrote several command line python scripts to load, process, and visualize our data. As mentioned in Appendix \ref{appendix:code}, all our code is available on Github, but we briefly mention the different functions which our tools provide.
+
+    First, we point out that MarkerMapper and ArUco contain a collection of incredibly useful command line programs for creating calibration files, generating marker maps, stepping through videos and viewing detections, and even localizing to makermaps. In addition, we provide a tool that will detect markers in a video recorded on the robot and match those detections with the time stamps which were collected in unison with the video frames. This allows one to know not just the location of the detected tag, but the time stamp at which the detection occurred. We also provide a program for generating custom ArUco dictionaries. In our experiments with MarkerMapper, we found it necessary to use custom dictionaries to restrict the tags which could be detected. This helped mitigate false tag detections, and so we provide this tool for others to use. Further, we include a script that computes statistics about the frames per second given as input a file containing timestamps of frames.
+
+    We include python code which can process with CSV files exported motion capture into useful NumPy data structures \cite{jones_scipy.org_2001}.
+
+    Perhaps most importantly, we also provide the python script we used for IMU calibration. This serves as a reference implementation of the procedure described in \cite{tedaldi_robust_2014}, and can be used for any project requiring IMU calibration.
 
 
 
@@ -1110,6 +1130,7 @@
 
 \section{Conclusion} \label{section:conclusion}
 
+  This MQP conducted a thorough survey of localization techniques and isolated 5 techniques which are most promising for localization in high-speed, cluttered, multirobot environments, usch as FRC. We conducted a series of experiments to characterize our sensors and determine how accurate each method could be. We conclude that niave double integration of accelerometer data is inaccurate, but that applying calibration and zero velocity updates improve the accuracy. We find that a 480p60 camera is sufficient for detecting tags extremely on average ever \SI{33}{\milli\second} even with a 6ft spacing between tags. However, we show that a 6ft spacing is too sparse to build accurate MarkerMaps, and that building MarkerMaps in general is tricky. We offer suggestions on how to improve the likelihood of building an accurate map, and provide accuracy measures on maps built in a motion capture studio. Furthermore, we offer a sample implementation using an IMU, encoders, and a camera. This sample implementation provide a detailed example of how to filter all of these sensors together in a principled way, and it allowed us to explore some of the challenges of implementing a real localization system on a real robot. Due to time constraints, we were unable to benchmark the accuracy of our system, but we were able to demonstrate all of the sensor systems being collected, transported, and processed by the extended Kalman filter.
 
 
 
@@ -1144,9 +1165,21 @@
     \begin{table}[H]
       \centering
       \begin{tabular}{|c|c|c|c|} \hline
-        Item & Cost & Quantity & Extended Cost \\ \hline
+        Item & Quantity & Cost & Extended Cost \\ \hline
+        PSoc 5LP & 8 & \$10.00 & \$80.00 \\ \hline
+        RF Tx/Rx Pair & 8 & \$1.68 & \$13.44 \\ \hline
+        piezo speaker & 8 & \$1.65 & \$13.20 \\ \hline
+        9v battery & 8 & \$1.19 & \$9.49 \\ \hline
+        battery connector & 8 & \$0.54 & \$4.31 \\ \hline
+        power switch & 8 & \$2.11 & \$16.88 \\ \hline
+        LCD backpack & 8 & \$9.95 & \$79.60 \\ \hline
+        LCD display & 8 & \$3.90 & \$31.20 \\ \hline
+        passive components & 8 & \$5.00 & \$40.00 \\ \hline
+        prototyping board & 8 & \$5.00 & \$40.00 \\ \hline
+        TOTAL & & & \$328.12 \\ \hline
+        COST PER BEACON & & & \$41.02 \\ \hline
       \end{tabular}
-      \caption{Estimated Bill of Materials}
+      \caption{Estimated Bill of Materials assuming 8 beacons.}
       \label{table:beacon_bom}
     \end{table}
 
@@ -1204,6 +1237,6 @@
 
   \subsection{Code \& Dataset}\label{appendix:code}
 
-    All of the code used in the above experiments, including the sample implementation and all of the raw sensory data (minus large video files) are available in our github repository: \url{https://github.com/PHIL-MQP/phil}
+    All of the code used in the above experiments, including the sample implementation and some of the raw sensory data (minus large video files) are available in our github repository: \url{https://github.com/PHIL-MQP/phil}. For the datasets, the urls are encoded in the table in section \ref{section:dataset}.
 
 \end{document}
