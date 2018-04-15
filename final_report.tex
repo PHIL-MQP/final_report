@@ -31,17 +31,34 @@
 
 \begin{document}
 
-\title{Localization for FRC}
-\author{Jinan (Dorothy) Hu, Peter Mitrano, Kacper Puczydlowski, Nicolette Vere\thanks{equal contribution from all authors}}
+
+\thispagestyle{empty}
+\title{
+\huge{\textbf{Localization for FRC}} \\
+\vspace{1.0cm}
+\small{A Major Qualifying Project Report} \\
+\vspace{0.7cm}
+\small{Submitted to the Faculty of the} \\
+\vspace{0.7cm}
+\large{WORCESTER POLYTECHNIC INSTITUTE} \\
+\vspace{0.7cm}
+\small{In partial fulfillment of the requirements for the} \\
+\vspace{0.7cm}
+Degree of Bachelor of Science in \\
+\vspace{0.7cm}
+\large{Robotics Engineering and Computer Science} \\
+\vspace{0.7cm}
+\small{by}}
+\author{Jinan (Dorothy) Hu, Peter Mitrano, Kacper Puczydlowski, Nicolette Vere}
 
 \maketitle{}
 
-
+\newpage
 
 
 \section*{Abstract}
 
-% This will be the _last_ section we write.
+  We present research, design, analysis, and implementation of a low cost localization system for high speed, cluttered, multi-robot, environments. In these environments, no individual sensor is sufficient for accurate localization. We use the FIRST Robotics Competition as an example of these environments. We first provide a survey of localization techniques application to robotics as a whole. We define the criteria for successful localization in these environments, then describe experimental results to characterize and benchmark individual sensors or algorithms. We describe the datasets we have collected and released, and finally, we provide a description of how we implemented a subset of the proposed techniques in a complete localization system.
 
 
 
@@ -63,7 +80,7 @@
       ``Under strict rules, limited resources, and an intense six-week time limit, teams of students are challenged to raise funds, design a team brand, hone teamwork skills, and build and program industrial-size robots to play a difficult field game against like-minded competitors.'' \cite{kamen_first_2015}.
     \end{quotation}
 
-    Each year, a new game is designed for the teams to tackle. However, the field remains a constant size of 54'3" long by 26'3" wide. This field can contain walls, ramps, towers, or any other number of obstacles from year to year. A rendering of the 2018 field is shown in Figure \ref{fig:frc_field}. Furthermore, the field usually contains small balls or other game pieces that the robots must manipulate. In preparation for these competitions, teams will often build mock field elements or game pieces to practice with in their shops. These practice spaces vary trenendously in size and in terms of how the team can operate in the space (see \ref{appendix:survey}, \ref{section:defining_success}). The robots built for these competitions are typically several feet in every direction, with differential or mechanum drive, and can usually drive up to \si{4}{\meter\per\second}. Each match begins with a breif 15 second autonomous period, and continues with roughly 2 minutes of teleoperated control.
+    Each year, a new game is designed for the teams to tackle. However, the field remains a constant size of 54'3" long by 26'3" wide. This field can contain walls, ramps, towers, or any other number of obstacles from year to year. A rendering of the 2018 field is shown in Figure \ref{fig:frc_field}. Furthermore, the field usually contains small balls or other game pieces that the robots must manipulate. In preparation for these competitions, teams will often build mock field elements or game pieces to practice with in their shops. These practice spaces vary trenendously in size and in terms of how the team can operate in the space (see \ref{appendix:survey}, \ref{section:defining_success}). The robots built for these competitions are typically several feet in every direction, with differential or mechanum drive, and can usually drive up to \SI{4}{\meter\per\second}. Each match begins with a breif 15 second autonomous period, and continues with roughly 2 minutes of teleoperated control.
 
   \begin{figure}[H]
     \centering
@@ -99,7 +116,7 @@
   \subsection{LIDAR Mapping}
     LIDAR is a sensor that works by measuring the amount of time it takes a laser to return to the LIDAR after hitting a desired object \cite{keith_lidar_2007}. Since light moves at a constant speed, the LIDAR can calculate the distance between itself and the object that light was hitting. The formula to compute distance is $\frac{d*c}{2}$, where $d$ is the distance to the object, $c$ is the speed of light and the division by two accounts for traveling to the object and back. By repeating this process at different angles the LIDAR can produce a map of its surroundings by finding the distance between it and surrounding objects within its detecting range.
 
-    There are three types of information LIDAR can collect depending on the type of LIDAR. The first is the range to the target which is found using a topographical LIDAR. A differential Absorption LIDAR can find the chemical properties of the targets it is measuring. A doppler LIDAR can measure the velocity of a target. For our scenario, we concern ourselves only with topographical LIDAR methods.
+    There are three types of information LIDAR can collect depending on the type of LIDAR. The first is the range to the target which is found using a topographical LIDAR. A differential Absorption LIDAR can find the chemical properties of the targets it is measuring. A Doppler LIDAR can measure the velocity of a target. For our scenario, we concern ourselves only with topographical LIDAR methods.
 
     Most LIDAR have two main pulse systems for measuring distance. The first system uses a micropulse have lower powered lasers that are usually considered safer \cite{keith_lidar_2007}. The wavelength for these is typically 1.0-\SI{1.5}{\meter} \cite{lidar_uk_how_2017}. The second system uses high energy lasers and is typically only used for atmospheric measurements \cite{keith_lidar_2007}. The wavelength of these is typically 0.5-\SI{0.55}{\meter} \cite{lidar_uk_how_2017}.
     LIDAR localization works by matching landmarks to some known map. Since the distance between it and those landmarks are known, the LIDAR system can be used to determine its own position \cite{schlichting_vehicle_2016}. Another approach is to match point clouds found on the most recent map produced by the LIDAR to point clouds on the prior map. This has advantages because it does not rely on there being distinguishing features in the environment. But it also takes more time to compute the map since it has to compare more points than a feature to feature map \cite{li_extracting_2010}.
@@ -700,7 +717,7 @@
     \begin{figure}
       \centering
       \includegraphics[width=1\linewidth]{./images/repeated_noisy_signal.png}
-      \caption{Both the doppler-shifted and unshifted full noisy signals.}
+      \caption{Both the Doppler shifted and unshifted full noisy signals.}
       \label{fig:repeated_signal}
     \end{figure}
 
@@ -715,7 +732,7 @@
 
       %TODO review this section. some of it is WRONG
 
-      Using these simulated chirps, we ask the question of whether the doppler effect of a moving FRC robot will make the signal undetectable with simple pattern matching. The plots above show what happens if a doppler shift of a robot moving \SI{3}{\meter\per\second} is introduced. This speed causes a doppler shift of \SI{291.3}{\hertz}, and after applying pattern matching using the unshifted filter we see that the chirp is detected \SI{192.5}{\micro\second} early, which corresponds to \SI{6.6}{\centi\meter} of error, which is within our requirements (see section \ref{section:defining_success}). Furthermore, when the doppler has no effect, the error of our simulated detection is just \SI{2.5}{\milli\meter}, which is well within our requirements.
+      Using these simulated chirps, we ask the question of whether the Doppler effect of a moving FRC robot will make the signal undetectable with simple pattern matching. The plots above show what happens if a Doppler shift of a robot moving \SI{3}{\meter\per\second} is introduced. This speed causes a Doppler shift of \SI{291.3}{\hertz}, and after applying pattern matching using the unshifted filter we see that the chirp is detected \SI{192.5}{\micro\second} early, which corresponds to \SI{6.6}{\centi\meter} of error, which is within our requirements (see section \ref{section:defining_success}). Furthermore, when the Doppler has no effect, the error of our simulated detection is just \SI{2.5}{\milli\meter}, which is well within our requirements.
 
     \subsubsection{Effect of Chirp Bandwidth}
 
@@ -1130,11 +1147,15 @@
 
 \section{Conclusion} \label{section:conclusion}
 
-  This MQP conducted a thorough survey of localization techniques and isolated 5 techniques which are most promising for localization in high-speed, cluttered, multirobot environments, usch as FRC. We conducted a series of experiments to characterize our sensors and determine how accurate each method could be. We conclude that niave double integration of accelerometer data is inaccurate, but that applying calibration and zero velocity updates improve the accuracy. We find that a 480p60 camera is sufficient for detecting tags extremely on average ever \SI{33}{\milli\second} even with a 6ft spacing between tags. However, we show that a 6ft spacing is too sparse to build accurate MarkerMaps, and that building MarkerMaps in general is tricky. We offer suggestions on how to improve the likelihood of building an accurate map, and provide accuracy measures on maps built in a motion capture studio. Furthermore, we offer a sample implementation using an IMU, encoders, and a camera. This sample implementation provide a detailed example of how to filter all of these sensors together in a principled way, and it allowed us to explore some of the challenges of implementing a real localization system on a real robot. Due to time constraints, we were unable to benchmark the accuracy of our system, but we were able to demonstrate all of the sensor systems being collected, transported, and processed by the extended Kalman filter.
+  This MQP conducted a thorough survey of localization techniques and isolated 5 techniques which are most promising for localization in high-speed, cluttered, multi-robot environments, such as FRC. We conducted a series of experiments to characterize our sensors and determine how accurate each method could be. We conclude that naive double integration of accelerometer data is inaccurate, but that applying calibration and zero velocity updates improve the accuracy. We find that a 480p60 camera is sufficient for detecting tags extremely on average ever \SI{33}{\milli\second} even with a 6ft spacing between tags. However, we show that a 6ft spacing is too sparse to build accurate MarkerMaps, and that building MarkerMaps in general is tricky. We offer suggestions on how to improve the likelihood of building an accurate map, and provide accuracy measures on maps built in a motion capture studio. Furthermore, we offer a sample implementation using an IMU, encoders, and a camera. This sample implementation provide a detailed example of how to filter all of these sensors together in a principled way, and it allowed us to explore some of the challenges of implementing a real localization system on a real robot. Due to time constraints, we were unable to benchmark the accuracy of our system, but we were able to demonstrate all of the sensor systems being collected, transported, and processed by the extended Kalman filter.
 
 
 
 \section{Future Work} \label{section:future_work}
+
+  The goals of our MQP were to develop a solid understanding of a breadth of localization techniques, and to rigorously study their characteristics and performance. Therefore, there remains a lot of work to be done on turning this into a packaged system usable by someone other than its authors. We see a great opportunity for a future MQP to use our experiments, datasets, and sample code to build a real localization system for FRC that meets all the criteria outlined in Section \ref{section:defining_success}. The first steps for such a project would be to finish the accuracy benchmarking of our sample implementation and then iterate on the implementation details until the system meets our design criteria.
+
+  Alternatively, there is much more research to be done on beacons and optical flow. From the few experiments we did with these techniques and from all our background research, we believe these techniques are capable of contributing to the accuracy of a complete localization system. One could explore replacing ArUco and MarkerMapper with Beacons, or augmenting forward kinematics form encoders with optical flow. Beacons in particular are a very promising technique, although as we discovered in our early experiments, making beacons successful requires a lot of analog or digital signals processing knowledge. A good first step for these additional techniques could be to develop an algorithm for accurately detecting the arrival time of an ultrasonic chirp in the presence of Doppler shift. One could also start by exploring algorithms to turn optical flow vector fields into an estimate of the motion of the camera.
 
 
 
