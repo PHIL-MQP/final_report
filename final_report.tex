@@ -116,7 +116,7 @@
 
     If the rate at which the position must be updated is lower than the update rate of the data, many values can be processed and used to calculate an approximation within a given time window. This technique is known as preintegration. Instead of filtering the data, preintegration combines many data points into a single trajectory estimate. Then, it transforms the data into the navigation frame, allowing for a smoother approximation of system position. This was beneficial in cases where global position data was unavailable for extended periods of time, and it also decreases computational load of the localization thread \cite{lupton_visual-inertial-aided_2012}. The authors of \cite{lupton_visual-inertial-aided_2012} describe an overall CPU time of about 10ms for data processing and real-time execution, although the system update frequency is unknown. %TODO: any accuracy information?
 
-    Another method for computing position from IMU data is presented in \cite{vadim_indelman_information_2013}. The state estimate and sensors measurements, which include imagery in addition to IMU data, are represented as a factor graph, and an novel algorithm is presented to update these estimates to approximately-optimally estimate the true state. The main benefit of this approach is improved computational complexity over methods like Bundle Adjustment, without requiring linear or approximately-linear sensor models like with Kalman or Extended Kalman Filters.
+    Another method for computing position from IMU data is presented in \cite{vadim_indelman_information_2013}. The state estimate and sensors measurements, which include imagery in addition to IMU data, are represented as a factor graph, and an novel algorithm is presented to update these estimates to approximately-optimally estimate the true state. The main benefit of this approach is improved computational complexity over methods like Bundle Adjustment, without requiring linear or approximately-linear sensor models like with Kalman or extended Kalman filters.
 
     Due to the widespread availability and well understood algorithms for using IMUs to derive position, there exist libraries for IMU based localization already available to FRC team. Frameworks such as Sensor Fusion 2 (SF2) provide students with algorithms that include double integration, latency correction between IMU and camera data, fusion of encoder and IMU data, and keyframe-based state estimation \cite{kauai_labs_inc_video_2017}. These algorithms use known system parameters, such as update frequencies of sensors, frame transformations between sensors, and data from landmarks for filtering and position estimation. Additionally, the data is accurately timestamped and easily accessible to the vision processing thread. This way, the user receives an updated pose estimate without lag and has a history of the orientation. However, we suggest that these libraries are not quite robust enough for FRC teams to rely on them for accurate position (see \nameref{section:defining_success})
 
@@ -187,7 +187,7 @@
 
   \subsection{Filtering and Calibration} \label{filtering}
 
-    Given the number of sources of position information, it is natural that there will also be a number of ways to take advantage of using multiple techniques together. Different sensors can have better or worse performance in different scenarios, and a choice of fusion algorithm will yield more accurate position information by leveraging this. Calibration can also be used to compensate for errors between sensors. For instance, if your have encoders to determine that you are not moving, you can take your current IMU readings as a bias and using them to reduce the error build up during integration. The most popular class of filtering algorithms used for localization is called Bayesian filters. These filters describe the world and sensors with probability models, and they estimate both the state of the robot and the confidence (covariance) of that state estimate. Bayesian filtering algorithms include Kalman filters, information filters, and particle filters. Kalman filters and information filters have the advantage in computational efficiency, where as particle filters can more be more accurate if the true belief distribution is non-gaussian or if the true dynamics are nonlinear \cite{thrun_probabilistic_2005}. In our work, it is natural to consider the state as the position, velocity, and acceleration of the robot. It is common to assume that this state representation satisfies the Markov condition needed by Bayesian filters. Intuitively, the Markov condition says that knowing our current state and control input is sufficient to make a prediction of the next state, and we do not need the full history of states and control inputs. To implement these filters, we required a model for now our state changes given our current state and motor inputs. For each measurement source, we define how the sensor values are derived from the state. It is easy to come up with very rough approximations for these equations, but difficult to construct accurate ones. On the other hand, these filters have very strong gaurantees and their efficacy has been demonstrated in numerous systems \cite{chui_kalman_1991}\cite{digiampaolo_mobile_2014}\cite{mirzaei_kalman_2008}\cite{nasa_kalman_1999}\cite{saab_standalone_2011}.
+    Given the number of sources of position information, it is natural that there will also be a number of ways to take advantage of using multiple techniques together. Different sensors can have better or worse performance in different scenarios, and a choice of fusion algorithm will yield more accurate position information by leveraging this. Calibration can also be used to compensate for errors between sensors. For instance, if your have encoders to determine that you are not moving, you can take your current IMU readings as a bias and using them to reduce the error build up during integration. The most popular class of filtering algorithms used for localization is called Bayesian filters. These filters describe the world and sensors with probability models, and they estimate both the state of the robot and the confidence (covariance) of that state estimate. Bayesian filtering algorithms include Kalman filters, information filters, and particle filters. Kalman filters and information filters have the advantage in computational efficiency, where as particle filters can more be more accurate if the true belief distribution is non-gaussian or if the true dynamics are nonlinear \cite{thrun_probabilistic_2005}. In our work, it is natural to consider the state as the position, velocity, and acceleration of the robot. It is common to assume that this state representation satisfies the Markov condition needed by Bayesian filters. Intuitively, the Markov condition says that knowing our current state and control input is sufficient to make a prediction of the next state, and we do not need the full history of states and control inputs. To implement these filters, we required a model for now our state changes given our current state and motor inputs. For each measurement source, we define how the sensor values are derived from the state. It is easy to come up with very rough approximations for these equations, but difficult to construct accurate ones. On the other hand, these filters have very strong gaurantees and their efficacy has been demonstrated in numerous systems \cite{chui_kalman_1991}\cite{digiampaolo_mobile_2014}\cite{mirzaei_kalman_2008}\cite{nasa_kalman_1999}\cite{saab_standalone_2011}\cite{teslic_ekf-based_2011}\cite{marin_multi_2013}.
 
     Many of the localization techniques discussed involve some form of calibration. Primarily, the IMU requires calibration for misaligned axis, scaling factors, and biases. There are many procedures for calcuating these calibration parameters by taking advantage of static intervals and assumptions about the force of gravity \cite{lupton_visual-inertial-aided_2012}\cite{lee_test_2011}\cite{tedaldi_robust_2014}. Visual tag detection algorithms, such as ArUco, also include a camera calibration process to account for the focal length, field of view, and distortion characteristics of the camera \cite{itseez_calibration_2017}. Knowing these parameters allows one to undo distortion to the image, which is essential for detection of most AR tags.
 
@@ -629,7 +629,7 @@
       \label{fig:opt_flow}
     \end{figure}
 
-  \subsection{Benchmarking OpenCV Processing Times}
+  \subsection{Benchmarking OpenCV Processing Times} \label{section:profiling_opencv}
 
     This test compares computation time for optical flow with OpenCV. Tests were done using \texttt{lkdemo.cpp} which was we modified from a sample file provided by OpenCV. We compare this program on a laptop verse the RoboRIO and compare the time they took to run the code. The laptop used has a 2.8 GHz Intel 4 Core i7 processor. A chart below was made of the time that each program took to run 100 frames in seconds.
 
@@ -723,9 +723,20 @@
     %The VDAC8 on the psoc 5LP is limited by its speed setting options. There are only two options for what speed the DAC can be set to which are slow and high. The datasheet says that the slow option makes the settling time slower but consumes less operating current and the high mode does the opposite. The datasheet provides no further information about these settings so there is not a provided way to know the speed of the DAC. The DAC also is only 8 bit it can only be set to values between 0 and 255 which has not yet been a problem but is a limiting factor in general.
     %The Delta Sigma ADC has a resolution range of 8-20 bits.The lower the resolution the larger the range for conversion rate in samples per second. But even with the lowest resolution of 8 bits the range is only 8000-192000 which limits the minimum and maximum sample rate that can be used.
 
-  \subsection{Ultrasonic Beam Angle}
+  \subsection{Ultrasonic Beam Spread}
 
     % could at do beam-spread equation here
+    If we model our piezo speakers as flat piston transducers, then we can derive the beam divergence angle as follows \cite{bond_beam_2001}. $V$ is the speed of sound, $D$ is the diameter of the transducer, and $F$ is the frequency.
+
+    \begin{align} \label{eq:beam_divergence}
+      \begin{split}
+        \sin(\theta) &= 1.2\frac{V}{DF} \\
+        \theta &= \sin^{-1}\bigg(1.2\frac{343}{0.0381*25000}\bigg) \\
+        \theta &= 0.44684 = \ang{25.6}
+      \end{split}
+    \end{align}
+
+    Therefore, the total beam angle of these speakers is theoretically \ang{51.2}. Verifying this experimentally is left for future work, however this theoretical number can be used to estimate the number of beacons needed to give full coverage of the practice space in which the robot is operating.
 
   \subsection{Characteristics of Piezo Transducers}
 
@@ -800,7 +811,7 @@
       \label{table:fps_stats}
     \end{table}
 
-    We observe that startup-lag is the true cause of low minimum FPS, and therefore does not cause significant issues unless pose estimates from the first two frames are critical. However, there are in fact cases where the camera exceeds the desired FPS but as much as 48\% in the case of 60fps. There are also several cases where the processing collecting and stamping these images was not powerful enough to acheive the requested FPS. For example, we requested 720p30 on a raspberry pi, but were only able to capture at $\approx$15fps. This is real constraint that must be handled in a camera based localization system, and so we report those results for completeness. However, our results show that, assuming the computer is powerful enough to acheive the requested FPS on average, there are only small variations on FPS over time. We provide two full plots of FPS over time in two of the more curious entries in table \ref{table:fps_stats} to be more illistrative of how time between frames can vary (figures \ref{fig:fps_plot_1} and \ref{fig:fps_plot_2}).
+    We observe that startup-lag is the true cause of low minimum FPS, and therefore does not cause significant issues unless pose estimates from the first two frames are critical. However, there are in fact cases where the camera exceeds the desired FPS but as much as 48\% in the case of 60fps. There are also several cases where the processing collecting and stamping these images was not powerful enough to acheive the requested FPS. For example, we requested 720p30 on a Raspberry Pi, but were only able to capture at $\approx$15fps. This is real constraint that must be handled in a camera based localization system, and so we report those results for completeness. However, our results show that, assuming the computer is powerful enough to acheive the requested FPS on average, there are only small variations on FPS over time. We provide two full plots of FPS over time in two of the more curious entries in table \ref{table:fps_stats} to be more illistrative of how time between frames can vary (figures \ref{fig:fps_plot_1} and \ref{fig:fps_plot_2}).
 
     \begin{figure}[H]
       \centering
@@ -895,7 +906,7 @@
 
 	\subsection{Benchmarking MarkerMapper with VICON Motion Capture}
 
-    In this experiment, we determine how close the poses of markers in MarkerMapper map are to their true poses. We built three markermaps, then compare to the positions of markers according to VICON Motion Capture data. As described in section \ref{section:mocap}, the VICON is very accurate, and so it can serve as a reliable ground truth. We placed dots one the tags where we wanted to track them, and recorded the poses and orientations of each tag. Note that there are many more tags in the markermaps (48) than are tagged with motion capture (12). This is because it is difficult to track many shapes in motion capture with similar geometry, such as the triangle pattern of dots we used on our tags. When too many similar geometries are tracked, they can swap with each other and produced uninterpretable data. Therefore, we track one tag on each ``board'', which each board containing 8 tags. For each of the three maps we made, we then systematically compare the tag positions to the motion capture positions in three ways. First, we look at the translation error between corresponding tags. There are multiple ways to do this, however, because one must choose some common reference point in the motion capture and MarkerMapper frames. Therefore, we first consider the error if we align the MarkerMapper and motion capture estimates of Tag 0's pose. With Tag 0 aligned, we can compare the translation and rotation error between each of the other tags capture in MarkerMapper and motion capture. Then, we align Tag 1, and repeat the same error calculation but now for all the tags except Tag 1. Finally, we take the average of this procedure over all the alignments. These average rotational and translational errors are the final error we report for each map. Rotational error is given as the angle between the Z axes and Y axes of the marker. We also provide an additional metric, shown in the first column of Table \ref{table:markermapper_accuracy}. This is the error from each tag to Tag 0. To compute this, we go through each tag and compute the distance to Tag 0 according to motion capture and according to our map, and compare those values to get an error. The average of these errors over each tag is the ``Error To Tag 0'' metric. This simply provides another perspective on translational errors. Because these errors are consistently lower than the other translational error metric, we can say that MarkerMapper is more accurate at estimating the relative distances between tags than it is at estimating the absolute positions of tags in space. This is unsurprising, since the actual measurements MarkerMapper gets is from transforms between projections of tags in camera frames.
+    In this experiment, we determine how close the poses of markers in MarkerMapper map are to their true poses. We built three markermaps, then compare to the positions of markers according to VICON Motion Capture data. As described in section \ref{section:mocap}, the VICON is very accurate, and so it can serve as a reliable ground truth. We placed dots one the tags where we wanted to track them, and recorded the poses and orientations of each tag. Note that there are many more tags in the markermaps (48) than are tagged with motion capture (12). This is because it is difficult to track many shapes in motion capture with similar geometry, such as the triangle pattern of dots we used on our tags. When too many similar geometries are tracked, they can swap with each other and produced uninterpretable data. Therefore, we track one tag on each ``board'', which each board containing 8 tags. For each of the three maps we made, we then systematically compare the tag positions to the motion capture positions in three ways. First, we look at the translation error between corresponding tags. There are multiple ways to do this, however, because one must choose some common reference point in the motion capture and MarkerMapper frames. Therefore, we first consider the error if we align the MarkerMapper and motion capture estimates of tag 0's pose. With tag 0 aligned, we can compare the translation and rotation error between each of the other tags capture in MarkerMapper and motion capture. Then, we align tag 1, and repeat the same error calculation but now for all the tags except tag 1. Finally, we take the average of this procedure over all the alignments. These average rotational and translational errors are the final error we report for each map. Rotational error is given as the angle between the Z axes and Y axes of the marker. We also provide an additional metric, shown in the first column of Table \ref{table:markermapper_accuracy}. This is the error from each tag to tag 0. To compute this, we go through each tag and compute the distance to tag 0 according to motion capture and according to our map, and compare those values to get an error. The average of these errors over each tag is the ``Error To Tag 0'' metric. This simply provides another perspective on translational errors. Because these errors are consistently lower than the other translational error metric, we can say that MarkerMapper is more accurate at estimating the relative distances between tags than it is at estimating the absolute positions of tags in space. This is unsurprising, since the actual measurements MarkerMapper gets is from transforms between projections of tags in camera frames.
 
     \begin{table}[H]
       \centering
@@ -974,12 +985,13 @@
     \begin{tabular}{|c|c|c|c|c|} \hline
       name (hyperlink) & ground truth & camera & map & timestamps \\ \hline
       \href{https://users.wpi.edu/~pdmitrano/phil-datasets/turtlebot_mocap_complete.tar.gz}{\texttt{turtlebot\_complete}} & Y & Y & Y & Y \\ \hline
+      \href{https://users.wpi.edu/~pdmitrano/phil-datasets/turtlebot_mocap_complete.tar.gz}{\texttt{turtlebot\_complete}} & Y & Y & Y & Y \\ \hline
     \end{tabular}
     \label{table:datasets}
   \end{table}
 
   The dataset \texttt{turtlebot\_complete} consists of 9 trials of a Turtlebot 2 driving under teleoperated control with tags placed in a perimeter around the motion capture area. For each trial, we have recordings of camera frames at two different settings (480p 60fps and 1080p 30fps), encoder ticks from the kobuki base, and accelerometer, gyroscope, fused yaw, and temperature data from the RoboRIO. We have corresponding ground-truth labels for both the position of the robot, and the tags placed around the environment. We also provide three different maps built with the tags. One map was built with a C920, and the other two were built with a PS3Eye camera. The maps are quite different, despite being built back-to-back with the same general procedure. This demonstrates that the quality of the map produced is highly dependant on the which tags were seem with which other tags. In our experience, building markermaps is a highly unreliable process, so we include multiple maps to demonstrate this.
-  The \texttt{field\_data\_2} and \texttt{field\_data\_3} datasets were collected Team 126's practice FRC field (Sponsored by Nypro Inc.).
+  The \texttt{field\_data\_2} and \texttt{field\_data\_3} datasets were collected Team 126's practice FRC field (Sponsored by Nypro Inc.). In each of those two datasets, we ran one trial called \texttt{auto} where the robot drive in a series of concentric circles with static intervals in between, as well as a series called \texttt{drive} of realistic FRC driving patterns for about one minute. To simulate FRC driving patterns, we drove the robot to and from mock ``Switch'', ``Scale'', and ``Feeder Station'' field elements (from the 2018 FRC game). The driver during these tests participated in FRC for two years, and so we claim from experience that these driving patterns are realistic. During both the \texttt{auto} and \texttt{drive} trials, we recorded time stamped image frames from three camera as different resolutions and frame rates. Additionally, we recorded acceleration, rotational velocity, yaw angle, and motor set values from the NavX IMU plus encoder data from the drive wheels.
 
   \subsection{Provided Tools} \label{section:tools}
 
@@ -992,11 +1004,11 @@
 
   \subsection{Sensing Techniques Used}\label{section:techniques_used}
 
-    Our simple implementation includes three of the five proposed localization techniques (see \Newnameref{section:proposed_techniques}). We used an IMU, Drive wheel encoders, and a Camera with ArUco tags. We chose this subset because they were easy to implement, because they are the most accessable to an FRC team, and because they included both local and global position estimates. We have found examples in the literature of each of these techniques being used successfully, and in some cases our experiments we have verified that they satisfy our criteria for accuracy, precision, update rate, and accessibility criteria.
+    Our simple implementation includes three of the five proposed localization techniques (see \Newnameref{section:proposed_techniques}). We limited ourselves to only three methods because of time constraints. We used an IMU, Drive wheel encoders, and a Camera for ArUco tags. We chose this subset because they were easy to implement, because they are the most accessible to an FRC team, and because they included both local and global position estimates. We have found examples in the literature of each of these techniques being used successfully, and in some cases our experiments we have verified that they satisfy our criteria for accuracy, precision, update rate, and accessibility criteria. Therefore, chooses these three techniques was justified.
 
 	\subsection{Robot Hardware}
 
-    A picture of the robot we built can be seen in Figure \ref{fig:mocap_robot}. This robot consists of an AndyMark chassis (am-2240) with Toughbox gearboxes (similar to am-0977), and two sets of 6in wheels. The back wheels are have more traction than the front, which has the platform have more interesting and challenging dynamics--a simple Dubin's car or differential drive model is inaccurate. We use two \href{https://www.digikey.com/product-detail/en/grayhill-inc/63R256/GH3070-ND/304479}{Greyhill 63R256} encoders with 256 pulses per revolution. Because the gear ratio of our gearboxes is unknown, it was simpler to directly measure distance per pulse, which we found to be \SI{0.000375}{\meter} per pulse.
+    A picture of the robot we built can be seen in Figure \ref{fig:mocap_robot}. This robot consists of an AndyMark chassis (am-2240) with Toughbox gearboxes (similar to am-0977), and two sets of 6in wheels. The back wheels have more traction than the front, which means the robot will slip. This provides interesting and challenging dynamics--a simple Dubin's car or differential drive model is inaccurate. From our experience in FRC, we know off-center turning is a common feature of FRC robots. We use two \href{https://www.digikey.com/product-detail/en/grayhill-inc/63R256/GH3070-ND/304479}{Greyhill 63R256} encoders with 256 pulses per revolution. Because the gear ratio of our gearboxes is unknown, it was simpler to directly measure distance per pulse, which we found to be \SI{0.000375}{\meter} per pulse.
 
     \begin{figure}[H]
       \centering
@@ -1005,16 +1017,86 @@
       \label{fig:mocap_robot}
     \end{figure}
 
+    In addition to the RoboRIO, we use a Raspberry Pi 3 a our co-processor. We use the Raspberry Pi for image processing (see \ref{section:profiling_opencv}), and connect a PS3Eye camera capable of 460x480 video at 60fps. The main program which accumulates sensor data and computes position also runs on the Raspberry Pi.
+
 	\subsection{Kalman Filtering}
 
-    In order to fuse measurements from our three sensors, we used an Extended Kalman Filter.
+    In order to fuse measurements from our three sensors, we used an extended Kalman filter. Based on our literature review, we found a common EKF formulation for robot localization was to use the measured wheel speeds as the control input $u$, and other sensors as measurements $z$ \cite{thrun_probabilistic_2005}. We chose an extended Kalman filter because it has been shown many times to be effective at fusing encoder and IMU data \cite{marin_multi_2013}\cite{teslic_ekf-based_2011}\cite{thrun_probabilistic_2005}. In our sample implementation, we have three measurement sources: Acceleration from the NavX, yaw from the NavX, and position from the camera. We also considered an alternate formulations, where the accelerometer was treated as the control input, and where the voltages or current to the motors were the control inputs. We ultimately settled on using encoders because we found it was more common. Additionally, if current were used we would have needed to purchase additional FRC control system components. Exploring the trade-offs between different EKF formulations, or even different sensor fusion approaches, would be a worthy goal for future MQPs. We show the full form of the prediction step of our EKF in Equation \ref{eq:ekf_prediction}. We denote the value of a state variable at time $t$ with an underscore. The hat symbol ($\hat{x}$) indicates that it is an intermediate predicted state variable. Note we also assume a constant time interval, $\Delta t$. The linear velocity of the wheels, $v_l$ and $v_r$ are our control input. Note we do not need to model rotational acceleration, because we can directly measure the yaw angle ($\theta$) and we can predict the rotational velocity directly from our wheel speeds. The $\alpha$ parameter is a slip coefficient that must be greater than 1 \cite{yu_dynamic_2011}. We use $W$ to represent that track width of the robot.
+
+    \begin{align} \label{eq:ekf_prediction}
+      \begin{split}
+        v &= \frac{v_l + v_r}{2} \\
+        \hat{x}_{t+1} &= x_t + \dot{x}_t\Delta t + \tfrac{1}{2}\ddot{x}_t\Delta t^2 \\
+        \hat{y}_{t+1} &= y_t + \dot{y}_t\Delta t + \tfrac{1}{2}\ddot{y}_t\Delta t^2 \\
+        \hat{\theta}_{t+1} &= \theta_t + \dot{\theta}_t\Delta t \\
+        \hat{\dot{x}}_{t+1} &= v\cos(\theta_t) \\
+        \hat{\dot{y}}_{t+1} &= v\sin(\theta_t) \\
+        \hat{\dot{\theta}}_{t+1} &= \frac{v_r - v_l}{\alpha W} \\
+        \hat{\ddot{x}}_{t+1} &=  \ddot{x}_{t} \\
+        \hat{\ddot{y}}_{t+1} &=  \ddot{y}_{t} \\
+        \hat{\ddot{\theta}}_{t+1} &= 0 \\
+      \end{split}
+    \end{align}
+
+    Because the EKF requires a linearized version of the above state-space equations, we must provide a Jacobian matrix. This matrix contains the partial derivatives of each state variable update equation with respect to each state variable. The shape is therefore a square matrix the same size as the state space, which in our formulation means 9x9. The full analytic Jacobian is shown in Equation \ref{eq:ekf_jacobian}.
+
+    \begin{equation} \label{eq:ekf_jacobian}
+      \begin{bmatrix}
+        1 & 0 & 0 & \Delta t & 0 & 0 & 0.5\Delta t^2 & 0 & 0 \\
+        0 & 1 & 0 & 0 & \Delta t & 0 & 0 & 0.5\Delta t^2 & 0 \\
+        0 & 0 & 1 & 0 & 0 & \Delta t & 0 & 0 & 0 \\
+        0 & 0 & -v\sin(\theta_t) & 0 & 0 & 0 & 0 & 0 & 0 \\
+        0 & 0 & v\cos(\theta_t) & 0 & 0 & 0 & 0 & 0 & 0 \\
+        0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+        0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 \\
+        0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+        0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+      \end{bmatrix}
+    \end{equation}
+
+    The next step is to describe the measurement updates. The requirement here is to define a function that takes in the current state prediction and outputs a predicted measurement vector. Conveniently, although importantly not required by the EKF, all of our measurement updates are simple linear functions, and therefore we write them as matrix multiplications between the state column vectors $\hat{x}$ and some matrix $H$. Note in this context $\hat{x}$ is the entire 9x1 state vector, not just the $x$ component of the state. In our sample implementation, we have three H matrices: $H_{\text{acc}}$, $H_{\text{yaw}}$, $H_{\text{camera}}$. They are shown below in Equations \ref{eq:H_acc}, \ref{eq:H_yaw}, and \ref{eq:H_camera}. These matrices simply contain $1$'s because the measurements are exactly the same as the state variables, due to the pre-processing of the measurements. We will now describe these required pre-processing steps.
+
+    \begin{equation} \label{eq:H_acc}
+      H_{\text{acc}} =
+      \begin{bmatrix}
+        0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 \\
+        0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+      \end{bmatrix}
+    \end{equation}
+
+    \begin{equation} \label{eq:H_yaw}
+      H_{\text{yaw}} =
+      \begin{bmatrix}
+        0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\
+      \end{bmatrix}
+    \end{equation}
+
+    \begin{equation} \label{eq:H_camera}
+      H_{\text{camera}} =
+      \begin{bmatrix}
+        1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+        0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+        0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\
+      \end{bmatrix}
+    \end{equation}
+
+    \subsubsection{Encoder Pre-Processing}
+
+      Because the encoders technically only measure pulses, we most convert this into linear speed. The step of converting ticks to a linear elocity of radians per second is performed on the RoboRIO in WPILib. We provide in our code the conversion from ticks to meters, and the WPILib Encoder class provides the \texttt{GetRate()} method, which returns the linear velocity of the wheels.
 
     \subsubsection{Accelerometer Pre-Processing}
-    \subsubsection{Encoder Pre-Processing}
+
+      Like with the encoders, the accelerometer does not directly measure what we need for our Kalman filter. We apply calibration, base frame rotation, and zero velocity updates to this data before passing it to the EKF. These methods were explored in detail in sections \ref{section:imu_calibration} and \ref{section:drift_bias}. We apply the static detector described in these sections to a window of the last $80$ samples, and use the detected static intervals to compute our current bias estimates and perform zero velocity updates.
+
+    \subsubsection{Camera Pre-Processing}
+
+      First, we only consider frames where valid pose estimates are return from MarkerMapper. In those frames where a pose estimate is made, we may choose to transform that pose estimate into a frame other than the MarkerMapper frame. In the MarkerMapper frame, everything is relative to the origin tag, which is usually tag 0. Unless that origin tag is placed on the floor facing up where the desired origin is, you may want to rotate the pose measurements from MarkerMapper before feeding them into the EKF. We omit this in our implementation for simplicity, and instead assume that tag 0 is placed on the floor at the desired origin.
 
   \subsection{Software Design}
 
-    There are two software components of our sample implementation. First, there is a a C++ library that is cross-compiled for the RoboRIO that FRC teams will use in their robot projects. We use the standard Eclipse-based C++ development environment and write our robot projects the same way an FRC team would. Teams are expected to call two or three simple functions in their robot program, which gives us everything we need to log sensor data and send it to the co-processor. Because of this minimal API, we require very few changes to robot programs in order to get localization. This would make it approachable for teams and encourage them to try localization. The second software component is a C++ program running on the co-processor. This program reads the camera data from a CSCore camera stream, serves an annotated version of the camera stream, receives the IMU and encoder data from the RoboRIO, computes the position of the robot, and reports this position over network tables. See \ref{fig:software_diagram} for a diagram of this system.
+    There are two software components of our sample implementation. First, there is a C++ library that is cross-compiled for the RoboRIO that FRC teams will use in their robot projects. We use the standard Eclipse-based C++ development environment and write our robot projects the same way an FRC team would. Teams are expected to call two or three simple functions in their robot program, which gives us everything we need to log sensor data and send it to the co-processor. Because of this minimal API, we require very few changes to robot programs in order to get localization. This would make it approachable for teams and encourage them to try localization. This library is called \texttt{phil\_rio} and is built and installed to ones \texttt{\textasciitilde/wpilib} directory.
+
+    The second software component is a C++ program running on the co-processor. This program reads the camera data from a CSCore camera stream, serves an annotated version of the camera stream, receives the IMU and encoder data from the RoboRIO, computes the position of the robot, and reports this position over network tables. See \ref{fig:software_diagram} for a diagram of this system.
 
     \begin{figure}[H]
       \centering
