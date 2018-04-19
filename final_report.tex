@@ -1,6 +1,7 @@
 \documentclass{article}
 \usepackage[margin=1.5in]{geometry}
 \usepackage{amsmath}
+\usepackage{amsfonts}
 \usepackage{lipsum}
 \usepackage{caption}
 \usepackage{float}
@@ -11,7 +12,6 @@
 \usepackage{pgfplots}
 \usepackage{siunitx}
 \usepackage{tikz}
-\usepackage{amsmath}
 \usepackage{color}   %May be necessary if you want to color links
 \usepackage{hyperref}
 \hypersetup{
@@ -58,7 +58,10 @@ Degree of Bachelor of Science in \\
 
 \section*{Abstract}
 
-  We present research, design, analysis, and implementation of a low cost localization system for high speed, cluttered, multi-robot, environments. In these environments, no individual sensor is sufficient for accurate localization. We use the FIRST Robotics Competition as a motiving example. We survey localization techniques application as a whole, and subsequently identify which of these techniques are most applicable. We define criteria for successful localization in these environments, then describe experimental results to characterize and benchmark individual sensors and algorithms. Furthermore, we describe the datasets we have collected and released, and finally, we provide a description of how we combined a subset of the proposed techniques in a complete localization system.
+% TODO: make the third stance the first sentence
+% 10 word description of FRC
+
+  We present research, design, analysis, and implementation of a low-cost localization system for high speed, cluttered, multi-robot environments. In these environments, no individual sensor is sufficient for accurate localization, and there is currently no established low-cost localization solution available. The FIRST Robotics Competition (FRC) is both our motiving example and an interesting environment in which to study localization. In this report, we define criteria for successful localization, then describe experimental results to characterize and benchmark individual sensors and algorithms. Furthermore, we describe the datasets we have collected and released, and finally, we provide a description of how we combined a subset of the proposed techniques in a complete localization system.
 
 
 
@@ -67,11 +70,11 @@ Degree of Bachelor of Science in \\
 
   \subsection{Motivation}
 
-    Imagine you arrive for the first time to spectate an FRC competition. The robots are placed carefully around the field, the announcer counts down to the beginning of the autonomous portion of the match, and you wait in anticipation for these great machines to come to life. The buzzer blares, and nothing moves. Unfortunately, this is a fairly common occurrence, and even more commonly the robots will simply drive roughly forward for a few seconds before stopping and waiting for the teleoperated portion of the match to begin. In many cases, interesting autonomous behavior requires knowing the position of the robot. In order to pick up game pieces or interact with elements of the field, it is incredibly useful to know the position and orientation of the robots. This is the motivation for our MQP. We take the first steps towards a principled and robust solution to this problem. FRC is just one example of a high-speed, cluttered, multi-robot environment, and while there are tried-and-true solutions to many instances of the general localization problem, these FRC like environments currently lack an accurate and inexpensive solution. FRC is a challenging environment because the robots make rapid and aggressive maneuvers by human drivers for part of the time, and at other times are under complete autonomy. Another challenge is that FRC fields are cluttered with other robots and game pieces such as soccer balls, pool noddles, or inflatable shapes, and these objects change from year to year. A successful localization system for FRC must support up to six robots, and must be robust to occlusion from the playing field elements, unpredictable lighting, and frequent impacts. Our research suggests that there are at least five appropriate methods for localization: cameras and tags, radio and ultrasonic beacons, optical flow, dead reckoning with encoders, and dead reckoning with an IMU. All of these methods have seen success in robot localization, but we will argue that none of them are sufficient on their own.
+    Imagine someone arrives for the first time to spectate an FIRST Robotics Competition (FRC) event. The robots are placed carefully around the field, the announcer counts down to the beginning of the autonomous portion of the match, and they wait in anticipation for these great machines to come to life. The buzzer blares, and nothing moves, just 30 seconds of robots waiting awkwardly for their human drivers to take control. Unfortunately, this is a common occurrence, and even more commonly the robots will simply drive haphazardly forward for a few seconds before stopping and waiting for the teleoperated portion of the match to begin. In many cases, interesting autonomous behavior requires knowing the position of the robot. For example, in order to pick up game pieces or interact with elements of the field it is incredibly useful to know the position and orientation of the robots. In this MQP, we take the first steps towards a principled and robust solution to this problem. FRC is just one example of a high-speed, cluttered, multi-robot environment. While there are solutions to many instances of the general localization problem, these FRC like environments currently lack an accurate and inexpensive solution. FRC is a challenging environment because, under the control of human drivers, the robots make rapid and aggressive maneuvers for part of the time, and at other times the robots are under complete autonomy. Another challenge is that FRC fields are cluttered with other robots and game pieces that change from year to year such as soccer balls, pool noddles, or inflatable shapes. A successful localization system for FRC must support up to six robots, and must be robust to occlusion from the playing field elements, unpredictable lighting, and frequent collisions. Our research suggests that there are at least five appropriate methods for localization: cameras and tags, radio and ultrasonic beacons, optical flow, dead reckoning with encoders, and dead reckoning with an inertial measurement unit (IMU). All of these methods have seen success in robot localization, but we claim that none of them are sufficient on their own.
 
   \subsection{Problem Statement}
 
-    We desire a system for determining the pose consisting of $x$ and $y$ position and orientation $\theta$ of the robot. At the highest level, the goal is to allow robots to query their absolute pose on the field at any time. This information is a prerequisite for interesting behaviors such as path following, picking up game pieces, and navigating to feeder stations. An important criteria for our system is that it work well not only on the FRC field, but in teams practice spaces. This means we cannot rely on an \textit{a priori} map of the geometry of the environment, or any other knowledge of the lighting, sound, and surface conditions.
+    We desire a system for determining the pose consisting of $x$ and $y$ position and orientation $\theta$ of the robot. At the highest level, the goal is to allow robots to query their absolute pose on the field at any time. This information is a prerequisite for interesting behaviors such as path following, picking up game pieces, and navigating to feeder stations. An important criteria for our system is that it work well not only on the FRC field, but in teams' practice spaces. This means we cannot rely on an \textit{a priori} map of the geometry of the environment, or any other knowledge of the lighting, sound, and surface conditions.
 
   \subsection{FIRST Robotics Competition} \label{section:frc}
 
@@ -80,16 +83,17 @@ Degree of Bachelor of Science in \\
       ``Under strict rules, limited resources, and an intense six-week time limit, teams of students are challenged to raise funds, design a team brand, hone teamwork skills, and build and program industrial-size robots to play a difficult field game against like-minded competitors.'' \cite{kamen_first_2015}.
     \end{quotation}
 
-    Each year, a new game is designed for the teams to tackle. However, the field remains a constant size of 54'3" long by 26'3" wide. This field can contain walls, ramps, towers, or any other number of obstacles from year to year. A rendering of the 2018 field is shown in Figure \ref{fig:frc_field}. Furthermore, the field usually contains small balls or other game pieces that the robots must manipulate. In preparation for these competitions, teams will often build mock field elements or game pieces to practice with in their shops. These practice spaces vary tremendously in size and in terms of how the team can operate in the space (see \ref{appendix:survey}, \ref{section:defining_success}). The robots built for these competitions are typically several feet in every direction, with differential or Mecanum drive, and can usually drive up to \SI{4}{\meter\per\second}. Each match begins with a brief 15 second autonomous period, and continues with roughly 2 minutes of teleoperated control.
+    Each year, a new game is designed for the teams to tackle. However, the field remains a constant size of 54'3" long by 26'3" wide. This field can contain walls, ramps, towers, or any other number of obstacles from year to year. A rendering of the 2018 field is shown in Figure \ref{fig:frc_field}. Furthermore, the field usually contains small balls or other game pieces that the robots must manipulate. In preparation for these competitions, teams will often build mock field elements or game pieces to practice with in their shops. These practice spaces vary tremendously in size and in terms of how the team can operate in the space (see sections \ref{appendix:survey}, \ref{section:defining_success}). The robots for these competitions are typically several feet in every direction, with differential or Mecanum drive, and can usually drive up to \SI{4}{\meter\per\second}. Each match begins with a brief 15 second autonomous period, and continues with roughly 2 minutes of teleoperated control. During the autonomous phase, teams use a v
 
     \begin{figure}[H]
       \centering
       \includegraphics[width=0.75\linewidth]{./images/FIRST_2018_field.jpg}
       \caption{the FIRST Robotics 2018 Competition Field}
       \label{fig:frc_field}
+      % TODO: cite this image, and check for any others?
     \end{figure}
 
-    The robots themselves contain a range of sensors, but the sensors useful for localization commonly include encoders on the drive wheels, an IMU, and a camera. Presently, teams use often a provided API to compute the current angle from the IMU, and may use encoders to measure the forward distance traveled. Teams often use the camera to detect large retro-reflective pieces of tape using simple blob detection with OpenCV in order to align their robots with certain field elements. While some teams use the camera or other sensors to go well above and beyond this, most teams do not have the resources or talent to do so \cite{balaji_zebravision_2017}. Overall, while many robots contains sensors which are useful for localization, very few teams are able to extract a reliable position estimate from these sensors.
+   While many robots contain sensors which are useful for localization, very few teams are able to extract a reliable position estimate from these sensors. The sensors useful for localization include encoders on the drive wheels, an IMU, and a camera. Presently, teams often use a provided software library to compute the current robot angle from the IMU, and may use encoders to measure the forward distance traveled. Teams may also use the camera to detect large retro-reflective pieces of tape using simple blob detection with OpenCV in order to align their robots with certain field elements. While some teams use the camera or other sensors to go well above and beyond this, most teams do not have the resources or talent to do so \cite{balaji_zebravision_2017}. % TODO: concluding sentence here
 
   \subsection{Key Contributions}
 
@@ -99,7 +103,7 @@ Degree of Bachelor of Science in \\
       \item Set of metrics which define a successful localization system for FRC
       \item Suite of 20+ experiments (see \Newnameref{section:experiments}) spanning many different sensing methods
       \item Dataset of robot sensory readings and associated ground-truth position
-      \item And a sample implementation oF a full localization system based on all this knowledge
+      \item And a sample implementation of a full localization system based on all this knowledge
     \end{itemize}
 
 \tableofcontents
@@ -234,7 +238,7 @@ Degree of Bachelor of Science in \\
 
   IMUs within the budget of FRC teams suffer from accumulated drift, and as such they cannot be used in isolation (see \ref{section:double_integration_is_inaccurate}). On the other hand, many FRC students have experience with them, so it would be wise to support basic features such as heading detection and filtering using IMUs. IMUs also compliment other localization techniques very well. For example, cameras suffer from the jitter of the robot moving, and encoders fail when the wheels slip. IMUs on the other hand are excellent at detecting jitter and slippage. In this way, an IMU is a good complement to cameras and encoders.
 
-  Radio and ultrasonic beacons are very attractive because of their low cost and ability to automatically locate each other. The cost of each beacon are projected to cost about \$30 (see \ref{table:beacon_bom}). Furthermore, beacons have more flexibility in their placement than tags because they are much smaller and do not need to be on flat surfaces, or in specific orientations. Finally, because each beacon can operate as a transmitter or a receiver, beacons can automatically locate each other, which means students will not have to measure their positions or worry about them being accidentally bumped. A procedure for building a map of beacons is described in section \ref{section:beacon_self_localization}. Beacons also make up for some flaws in the other techniques. Beacons provide absolute global position but updates slowly, which nicely complements IMU and encoder methods which are fast but only measure changes in position. Additionally, beacons are more resistant to jitter than cameras. Finally, by placing the beacons and cameras in different locations we can minimize the effect of occlusion.
+  Radio and ultrasonic beacons are very attractive because of their low-cost and ability to automatically locate each other. The cost of each beacon are projected to cost about \$30 (see \ref{table:beacon_bom}). Furthermore, beacons have more flexibility in their placement than tags because they are much smaller and do not need to be on flat surfaces, or in specific orientations. Finally, because each beacon can operate as a transmitter or a receiver, beacons can automatically locate each other, which means students will not have to measure their positions or worry about them being accidentally bumped. A procedure for building a map of beacons is described in section \ref{section:beacon_self_localization}. Beacons also make up for some flaws in the other techniques. Beacons provide absolute global position but updates slowly, which nicely complements IMU and encoder methods which are fast but only measure changes in position. Additionally, beacons are more resistant to jitter than cameras. Finally, by placing the beacons and cameras in different locations we can minimize the effect of occlusion.
 
   Wireless network systems are among the most popular for indoor localization. However, they also require knowledge and control over the \SI{2.5}{\giga\hertz} spectrum in the area where they are used. At FRC events, there can be dozens of wireless networks running, as well as the wireless networks used on the field for communication between robots. For this reason, we feel that techniques using wireless frequency have too many unknown variables. It's possible that there are methods other than signal-strength \SI{2.5}{\giga\hertz} based systems which could work well for FRC, but those advanced techniques are neither well established nor within our ability to implement.
 
@@ -449,7 +453,7 @@ Degree of Bachelor of Science in \\
 
     \subsubsection{Zero Velocity Updates} \label{section:zero_velocity_updates}
 
-      Looking at the calibrated velocity plots (Figure \ref{fig:calibrated_velocity}), clearly there is still bias in the accelerometer readings which are causing the velocity to drift up and down during intervals of motion. We now apply zero velocity updates to the data to mitigate this. Our zero velocity updates work as such: when the static detector indicates the robot is stationary, calculate the bias in that static interval, remove that bias from the static interval and the following dynamic interval, and finally set the current velocity estimate to be zero. %TODO: add more details or math on how precisely this is done
+      Looking at the calibrated velocity plots (Figure \ref{fig:calibrated_velocity}), clearly there is still bias in the accelerometer readings which are causing the velocity to drift up and down during intervals of motion. We now apply zero velocity updates to the data to mitigate this. The first step is to apply the static detector. We borrow the static detector used in our IMU calibration section which thresholds the variance based on a sample of known static data. We then apply this threshold to variance of a window of 20 samples. After applying the static detector to each window, we get a series of static intervals. Then we compute the bias in that interval, which is simply the mean for x, y, and z. This vector of means is now our best guess of the bias, and we subtract it from all samples in the static interval and in all future samples until the next static interval. Additionally, we hard force the current acceleration and velocity estimates to be zero.
 
       \begin{figure}[H]
         \centering
@@ -491,8 +495,6 @@ Degree of Bachelor of Science in \\
       \end{figure}
 
   \subsection{Comparing Our IMU Localization to the NavX API}
-
-		% TODO: also compare using with new mocap data
 
 		We compare our method for localization with only the IMU against the \texttt{GetWorldX()} and \texttt{GetWorldY()} functions provided by the NavX. These functions differ from our methods because they do not include zero velocity updates or drift compensation. We also apply our own calibration parameters to our data, which differs from the internal calibration done by the NavX. As is shown in the Figure \ref{fig:displacement_comparison}, both methods drift significantly over the course of our experiment (``Nypro Circles'', described in Section \ref{section:drift_bias}). For reference, in this test our robot was driven in circles with a constant left-right wheel speed difference. However, when we zoom in to the first thirty seconds of the data, we see our method better preserves the sinusoidal nature of the motion, whereas the NavX position constructs lots of straight edges. Furthermore, zooming in to the first three seconds highlights that our method is significantly more accurate.
 
@@ -739,17 +741,13 @@ Degree of Bachelor of Science in \\
 
     \subsubsection{The Doppler Effect on Ultrasonic}
 
-      %TODO review this section. some of it is WRONG
+      Using these simulated chirps, we ask the question of whether the Doppler effect of a moving FRC robot will make the signal undetectable with simple pattern matching. Without the Doppler effect, the error of our simulated detection is just \SI{3.57}{\milli\meter}, which comes from simulated the noise and finite ADC frequency. The plots above show what happens if a Doppler shift of a robot moving \SI{3}{\meter\per\second} is introduced. This speed causes a Doppler shift of \SI{174.8}{\hertz}, and after applying the same pattern matching as was used with the unshifted signal we see that the chirp is detected \SI{135}{\micro\second} early. This timing error corresponds to \SI{4.65}{\centi\meter} of error, which is within our requirements (see section \ref{section:defining_success}).
 
-      Using these simulated chirps, we ask the question of whether the Doppler effect of a moving FRC robot will make the signal undetectable with simple pattern matching. The plots above show what happens if a Doppler shift of a robot moving \SI{3}{\meter\per\second} is introduced. This speed causes a Doppler shift of \SI{291.3}{\hertz}, and after applying pattern matching using the unshifted filter we see that the chirp is detected \SI{192.5}{\micro\second} early, which corresponds to \SI{6.6}{\centi\meter} of error, which is within our requirements (see section \ref{section:defining_success}). Furthermore, when the Doppler has no effect, the error of our simulated detection is just \SI{2.5}{\milli\meter}, which is well within our requirements.
+      Unsurprisingly, when we introduce more noise the effect becomes dramatically worse. In our other experiments with the beacons, we found that the signal generally was not detectable above the noise floor by amplitude along. To simulate this, we apply random noise with amplitude 5 times greater than our true signal. For reference, the noise in Figure \ref{fig:repeated_signal} is only 4 times the true signal, and the true signal can be easily seen as the bump in the center. Under this slightly more noise, and we claim more realistic, condition, the simple pattern matching filter is unable to detect the correct peak in the convolved signal and the error is egregious (>\SI{10}{\meter}). Given the right noise condition, we found that the unshifted error can be small, a few centimeters, while the Doppler shifted signal error is large
 
     \subsubsection{Effect of Chirp Bandwidth}
 
       One of the main limiting factors of using cheap piezo speakers is the limited range of frequencies that induce a measurable response (see \ref{section:frequency_response}. Using our simulated chirps, we experimented with changing the frequency range over which the chirps sweep. When we use the full range of 20-27\SI{}{\kilo\hertz}, the amplitude of the match filter is higher and the error is lower. However, when a smaller range such as 23-24\SI{}{\kilo\hertz} is used, the amplitude of the match filter is lower, and more difficult to distinguish with a simple threshold. For the implementation of a beacon system, this means that the chirps should span as wide a frequency range as possible.
-
-
-    %The VDAC8 on the psoc 5LP is limited by its speed setting options. There are only two options for what speed the DAC can be set to which are slow and high. The datasheet says that the slow option makes the settling time slower but consumes less operating current and the high mode does the opposite. The datasheet provides no further information about these settings so there is not a provided way to know the speed of the DAC. The DAC also is only 8 bit it can only be set to values between 0 and 255 which has not yet been a problem but is a limiting factor in general.
-    %The Delta Sigma ADC has a resolution range of 8-20 bits.The lower the resolution the larger the range for conversion rate in samples per second. But even with the lowest resolution of 8 bits the range is only 8000-192000 which limits the minimum and maximum sample rate that can be used.
 
   \subsection{Ultrasonic Beam Spread}
 
@@ -1084,7 +1082,7 @@ Degree of Bachelor of Science in \\
 
   \subsection{Sensing Techniques Used}\label{section:techniques_used}
 
-    Our simple implementation includes three of the five proposed localization techniques (see \Newnameref{section:proposed_techniques}). We limited ourselves to only three methods because of time constraints. We used an IMU, Drive wheel encoders, and a Camera for ArUco tags. We chose this subset because they were easy to implement, because they are the most accessible to an FRC team, and because they included both local and global position estimates. We have found examples in the literature of each of these techniques being used successfully, and in some cases our experiments we have verified that they satisfy our criteria for accuracy, precision, update rate, and accessibility criteria. Therefore, chooses these three techniques was justified.
+    Our simple implementation includes three of the five proposed localization techniques (see Section \ref{section:proposed_techniques}). We limited ourselves to only three methods because of time constraints. We used an IMU, Drive wheel encoders, and a Camera for ArUco tags. We chose this subset because they were easy to implement, because they are the most accessible to an FRC team, and because they included both local and global position estimates. We have found examples in the literature of each of these techniques being used successfully, and in some cases our experiments we have verified that they satisfy our criteria for accuracy, precision, update rate, and accessibility criteria. Therefore, chooses these three techniques was justified.
 
 	\subsection{Robot Hardware}
 
@@ -1160,13 +1158,23 @@ Degree of Bachelor of Science in \\
       \end{bmatrix}
     \end{equation}
 
+    \begin{equation} \label{eq:H_camera}
+      \begin{split}
+        P_0 = 10^{-3}\,\mathbb{I}_9 \\
+        Q = 10^{-3}\,\mathbb{I}_9 \\
+        R_{\text{acc}} = 1^{-3}\,\mathbb{I}_2 \\
+        R_{\text{yaw}} = 1^{-4}\,\mathbb{I}_1 \\
+        R_{\text{camera}} = 1^{-4}\,\mathbb{I}_3 \\
+      \end{split}
+    \end{equation}
+
     \subsubsection{Encoder Pre-Processing}
 
       Because the encoders technically only measure pulses, we most convert this into linear speed. The step of converting ticks to a linear elocity of radians per second is performed on the RoboRIO in WPILib. We provide in our code the conversion from ticks to meters, and the WPILib Encoder class provides the \texttt{GetRate()} method, which returns the linear velocity of the wheels.
 
     \subsubsection{Accelerometer Pre-Processing}
 
-      Like with the encoders, the accelerometer does not directly measure what we need for our Kalman filter. We apply calibration, base frame rotation, and zero velocity updates to this data before passing it to the EKF. These methods were explored in detail in sections \ref{section:imu_calibration} and \ref{section:drift_bias}. We apply the static detector described in these sections to a window of the last $80$ samples, and use the detected static intervals to compute our current bias estimates and perform zero velocity updates.
+      Like with the encoders, the accelerometer does not directly measure what we need for our Kalman filter. We apply calibration, base frame rotation, and zero velocity updates to this data before passing it to the EKF. These methods were explored in detail in sections \ref{section:imu_calibration} and \ref{section:drift_bias}. We apply the static detector described in these sections to a window of the last $80$ samples, in contrast to when we do IMU processing offline where the windows are centered at the current time step. When the variance window of the window is less than the threshold (based on a known static interval) we say the robot is stationary and save the mean of that sample as the current estimate of bias. We then subtract off this bias from all future samples until another static window is found.
 
     \subsubsection{Camera Pre-Processing}
 
@@ -1174,7 +1182,7 @@ Degree of Bachelor of Science in \\
 
   \subsection{Software Design}
 
-    There are two software components of our sample implementation. First, there is a C++ library that is cross-compiled for the RoboRIO that FRC teams will use in their robot projects. We use the standard Eclipse-based C++ development environment and write our robot projects the same way an FRC team would. Teams are expected to call two or three simple functions in their robot program, which gives us everything we need to log sensor data and send it to the co-processor. Because of this minimal API, we require very few changes to robot programs in order to get localization. This would make it approachable for teams and encourage them to try localization. This library is called \texttt{phil\_rio} and is built and installed to ones \texttt{\textasciitilde/wpilib} directory.
+    There are two software components of our sample implementation. First, there is a C++ library that is cross-compiled for the RoboRIO that FRC teams will use in their robot projects. We use the standard Eclipse-based C++ development environment and write our robot projects the same way an FRC team would. Teams are expected to call two or three simple functions in their robot program, which gives us everything we need to log sensor data and send it to the co-processor. Because of this minimal API, we require very few changes to robot programs in order to get localization. This would make it approachable for teams and encourage them to try localization. This library is called \texttt{phil\_rio} and is built and installed to the \texttt{\textasciitilde/wpilib} directory.
 
     The second software component is a C++ program running on the co-processor. This program reads the camera data from a CSCore camera stream, serves an annotated version of the camera stream, receives the IMU and encoder data from the RoboRIO, computes the position of the robot, and reports this position over network tables. See \ref{fig:software_diagram} for a diagram of this system.
 
@@ -1190,7 +1198,7 @@ Degree of Bachelor of Science in \\
 
 \section{Conclusion} \label{section:conclusion}
 
-  This MQP conducted a thorough survey of localization techniques and isolated 5 techniques which are most promising for localization in high-speed, cluttered, multi-robot environments, such as FRC. We conducted a series of experiments to characterize our sensors and determine how accurate each method could be. We conclude that naive double integration of accelerometer data is inaccurate, but that applying calibration and zero velocity updates improve the accuracy. We find that a 480p60 camera is sufficient for detecting tags extremely on average ever \SI{33}{\milli\second} even with a 6ft spacing between tags. However, we show that a 6ft spacing is too sparse to build accurate MarkerMaps, and that building MarkerMaps in general is tricky. We offer suggestions on how to improve the likelihood of building an accurate map, and provide accuracy measures on maps built in a motion capture studio. Furthermore, we offer a sample implementation using an IMU, encoders, and a camera. This sample implementation provide a detailed example of how to filter all of these sensors together in a principled way, and it allowed us to explore some of the challenges of implementing a real localization system on a real robot. Due to time constraints, we were unable to benchmark the accuracy of our system, but we were able to demonstrate all of the sensor systems being collected, transported, and processed by the extended Kalman filter.
+  This MQP conducted a thorough survey of localization techniques and identified five techniques which are most promising for localization in high-speed, cluttered, multi-robot environments, such as FRC. We conducted a series of experiments to characterize our sensors and determine the accuracy of each method. We conclude that naive double integration of accelerometer data is inaccurate, but that applying calibration and zero velocity updates improves the accuracy. We found that a 480p60 camera is sufficient for detecting tags on average every \SI{33}{\milli\second} even with a 6ft spacing between tags. However, our experiments show that a 6ft spacing is too sparse to build accurate MarkerMaps, and that building MarkerMaps in general can be unreliable. We offer suggestions on how to improve the likelihood of building an accurate map, and provide accuracy measurements on maps built in a motion capture studio. Furthermore, we offer a sample implementation using an IMU, encoders, and a camera. This sample implementation provides a detailed example of how to filter all of these sensors together in a principled way, and allows us to explore some of the challenges of implementing a real localization system on a real robot. Due to time constraints, we were unable to benchmark the accuracy of our system, but we were able to demonstrate all of the sensor systems being collected, transported, and processed by the extended Kalman filter.
 
 
 
